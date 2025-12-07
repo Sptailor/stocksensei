@@ -22,12 +22,10 @@ export function SentimentCard({ sentimentScore, explanation, headlines }: Sentim
     <Card>
       <CardHeader>
         <CardTitle>News Sentiment Analysis</CardTitle>
-        <CardDescription>
-          <div className="flex items-center gap-2">
-            <span>Sentiment Score: {sentimentScore.toFixed(2)}</span>
-            <Badge variant={sentiment.variant}>{sentiment.label}</Badge>
-          </div>
-        </CardDescription>
+        <div className="flex items-center gap-2 mt-1.5">
+          <span className="text-sm text-muted-foreground">Sentiment Score: {sentimentScore.toFixed(2)}</span>
+          <Badge variant={sentiment.variant}>{sentiment.label}</Badge>
+        </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
