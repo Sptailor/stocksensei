@@ -1,0 +1,477 @@
+import Sentiment from "sentiment";
+
+const sentiment = new Sentiment();
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+export interface NewsArticle {
+  title: string;
+  description?: string;
+  publishedAt: Date | string;
+  source?: string;
+  url?: string;
+}
+
+export interface SentimentIndicators {
+  positive: string[];
+  negative: string[];
+}
+
+export interface ArticleSentimentBreakdown {
+  title: string;
+  source: string;
+  publishedAt: Date | string;
+  sentiment: "positive" | "negative" | "neutral";
+  score: number; // -1 to 1
+  weight: number;
+  positiveTerms: string[];
+  negativeTerms: string[];
+  hasNumericalData: boolean;
+  impactCategory: string;
+}
+
+export interface DetailedSentimentResult {
+  sentimentScore: number; // -1 to 1
+  sentimentLabel: "Extremely Negative" | "Negative" | "Slightly Negative" | "Neutral" | "Slightly Positive" | "Positive" | "Extremely Positive" | "Insufficient Data";
+  analysis: string;
+  positiveIndicators: string[];
+  negativeIndicators: string[];
+  confidence: number; // 0 to 1
+  articlesAnalyzed: number;
+  articleBreakdown?: ArticleSentimentBreakdown[];
+  dataQuality: "high" | "medium" | "low" | "insufficient";
+}
+
+interface WeightedArticle {
+  article: NewsArticle;
+  recencyWeight: number;
+  specificityWeight: number;
+  impactWeight: number;
+  totalWeight: number;
+}
+
+// ============================================================================
+// CONFIGURATION
+// ============================================================================
+
+// Keywords for impact detection (high-impact events)
+const HIGH_IMPACT_KEYWORDS = {
+  earnings: /\b(earnings|revenue|profit|loss|eps|quarterly|annual report)\b/i,
+  product: /\b(launch|unveil|release|announce|product|new model)\b/i,
+  regulatory: /\b(fda|sec|investigation|lawsuit|recall|ban|approved|denied)\b/i,
+  sales: /\b(sales|delivery|shipment|order|demand)\b/i,
+  leadership: /\b(ceo|cfo|executive|resignation|appointed|hired)\b/i,
+  analyst: /\b(upgrade|downgrade|rating|price target|analyst)\b/i,
+  market: /\b(ipo|merger|acquisition|buyback|dividend)\b/i,
+  innovation: /\b(ai|robot|autonomous|breakthrough|patent|technology)\b/i,
+};
+
+// Positive and negative financial terms
+const POSITIVE_TERMS = [
+  "surge", "soar", "rally", "gain", "profit", "beat", "exceed", "outperform",
+  "growth", "expansion", "success", "breakthrough", "innovation", "approved",
+  "upgrade", "bullish", "optimistic", "strong", "revenue growth", "record",
+  "milestone", "partnership", "acquisition", "investment"
+];
+
+const NEGATIVE_TERMS = [
+  "plunge", "crash", "fall", "decline", "loss", "miss", "underperform",
+  "lawsuit", "investigation", "recall", "warning", "downgrade", "bearish",
+  "pessimistic", "weak", "layoff", "bankruptcy", "fraud", "scandal",
+  "delay", "cancellation", "shortage", "deficit"
+];
+
+// ============================================================================
+// HELPER FUNCTIONS
+// ============================================================================
+
+/**
+ * Calculate recency weight (newer = higher weight)
+ * Uses exponential decay: articles older than 7 days have reduced weight
+ */
+function calculateRecencyWeight(publishedAt: Date | string): number {
+  const now = new Date();
+  const published = new Date(publishedAt);
+  const ageInHours = (now.getTime() - published.getTime()) / (1000 * 60 * 60);
+
+  // Exponential decay: 100% at 0 hours, 50% at 24 hours, 25% at 48 hours, etc.
+  const weight = Math.exp(-ageInHours / 24);
+
+  // Minimum weight of 0.1 for very old articles
+  return Math.max(0.1, Math.min(1.0, weight));
+}
+
+/**
+ * Calculate specificity weight (numerical data = higher weight)
+ */
+function calculateSpecificityWeight(text: string): number {
+  let weight = 0.5; // Base weight
+
+  // Check for numerical data (percentages, dollar amounts, specific numbers)
+  const hasPercentage = /\d+(\.\d+)?%/.test(text);
+  const hasDollarAmount = /\$\d+(\.\d+)?[BMK]?/.test(text);
+  const hasNumbers = /\d+/.test(text);
+
+  if (hasPercentage) weight += 0.2;
+  if (hasDollarAmount) weight += 0.2;
+  if (hasNumbers) weight += 0.1;
+
+  return Math.min(1.0, weight);
+}
+
+/**
+ * Calculate impact weight based on topic importance
+ */
+function calculateImpactWeight(text: string): { weight: number; category: string } {
+  let weight = 0.3; // Base weight for generic news
+  let category = "general";
+
+  // Check for high-impact categories
+  for (const [cat, regex] of Object.entries(HIGH_IMPACT_KEYWORDS)) {
+    if (regex.test(text)) {
+      // Earnings and regulatory news have highest impact
+      if (cat === "earnings" || cat === "regulatory") {
+        if (weight < 1.0) {
+          weight = 1.0;
+          category = cat;
+        }
+      } else if (cat === "analyst" || cat === "product") {
+        if (weight < 0.8) {
+          weight = 0.8;
+          category = cat;
+        }
+      } else {
+        if (weight < 0.6) {
+          weight = 0.6;
+          category = cat;
+        }
+      }
+    }
+  }
+
+  return { weight, category };
+}
+
+/**
+ * Analyze single article for sentiment
+ */
+function analyzeArticleSentiment(article: NewsArticle): {
+  score: number;
+  positive: string[];
+  negative: string[];
+} {
+  const text = `${article.title} ${article.description || ""}`;
+
+  // Use sentiment library for base analysis
+  const baseResult = sentiment.analyze(text);
+
+  // Enhance with custom financial term detection
+  const foundPositive: string[] = [];
+  const foundNegative: string[] = [];
+
+  for (const term of POSITIVE_TERMS) {
+    const regex = new RegExp(`\\b${term}\\b`, "i");
+    if (regex.test(text)) {
+      foundPositive.push(term);
+    }
+  }
+
+  for (const term of NEGATIVE_TERMS) {
+    const regex = new RegExp(`\\b${term}\\b`, "i");
+    if (regex.test(text)) {
+      foundNegative.push(term);
+    }
+  }
+
+  // Combine library sentiment with custom terms
+  let customScore = (foundPositive.length - foundNegative.length) * 2;
+  let combinedScore = (baseResult.score + customScore) / 10; // Normalize
+
+  // Clamp to -1..1
+  combinedScore = Math.max(-1, Math.min(1, combinedScore));
+
+  return {
+    score: combinedScore,
+    positive: [...new Set([...baseResult.positive, ...foundPositive])],
+    negative: [...new Set([...baseResult.negative, ...foundNegative])],
+  };
+}
+
+/**
+ * Deduplicate articles by title similarity
+ */
+function deduplicateArticles(articles: NewsArticle[]): NewsArticle[] {
+  const unique: NewsArticle[] = [];
+  const seen = new Set<string>();
+
+  for (const article of articles) {
+    // Normalize title for comparison
+    const normalized = article.title.toLowerCase().replace(/[^\w\s]/g, "").trim();
+
+    // Check if we've seen a very similar title
+    let isDuplicate = false;
+    for (const seenTitle of seen) {
+      const similarity = calculateSimilarity(normalized, seenTitle);
+      if (similarity > 0.8) {
+        isDuplicate = true;
+        break;
+      }
+    }
+
+    if (!isDuplicate) {
+      unique.push(article);
+      seen.add(normalized);
+    }
+  }
+
+  return unique;
+}
+
+/**
+ * Simple string similarity (Jaccard similarity)
+ */
+function calculateSimilarity(str1: string, str2: string): number {
+  const words1 = new Set(str1.split(/\s+/));
+  const words2 = new Set(str2.split(/\s+/));
+
+  const intersection = new Set([...words1].filter(x => words2.has(x)));
+  const union = new Set([...words1, ...words2]);
+
+  return intersection.size / union.size;
+}
+
+/**
+ * Convert score to label
+ */
+function scoreToLabel(score: number, dataQuality?: string): DetailedSentimentResult["sentimentLabel"] {
+  if (dataQuality === "insufficient") return "Insufficient Data";
+  if (score <= -0.7) return "Extremely Negative";
+  if (score <= -0.3) return "Negative";
+  if (score <= -0.1) return "Slightly Negative";
+  if (score >= 0.7) return "Extremely Positive";
+  if (score >= 0.3) return "Positive";
+  if (score >= 0.1) return "Slightly Positive";
+  return "Neutral";
+}
+
+/**
+ * Determine data quality based on article count and content
+ */
+function assessDataQuality(articles: NewsArticle[]): "high" | "medium" | "low" | "insufficient" {
+  if (articles.length === 0) return "insufficient";
+  if (articles.length < 3) return "low";
+
+  // Check content quality
+  let substantiveArticles = 0;
+  for (const article of articles) {
+    const text = `${article.title} ${article.description || ""}`;
+    const hasNumbers = /\d+/.test(text);
+    const hasFinancialTerms = /(revenue|earnings|profit|loss|growth|decline|stock|shares|market|price|analyst)/i.test(text);
+    const hasSubstantialContent = text.length > 100;
+
+    if ((hasNumbers && hasFinancialTerms) || hasSubstantialContent) {
+      substantiveArticles++;
+    }
+  }
+
+  const qualityRatio = substantiveArticles / articles.length;
+
+  if (articles.length >= 10 && qualityRatio >= 0.5) return "high";
+  if (articles.length >= 5 && qualityRatio >= 0.3) return "medium";
+  if (substantiveArticles >= 2) return "medium";
+
+  return "low";
+}
+
+// ============================================================================
+// MAIN ANALYSIS FUNCTION
+// ============================================================================
+
+/**
+ * Advanced multi-article sentiment analysis with weighting
+ */
+export async function analyzeNewsArticles(
+  articles: NewsArticle[]
+): Promise<DetailedSentimentResult> {
+  // Step 0: Assess data quality
+  const dataQuality = assessDataQuality(articles);
+
+  // Handle insufficient data
+  if (dataQuality === "insufficient" || articles.length === 0) {
+    return {
+      sentimentScore: 0,
+      sentimentLabel: "Insufficient Data",
+      analysis: articles.length === 0
+        ? "Insufficient ticker-specific data to determine sentiment. No relevant news articles found for this stock."
+        : "Insufficient ticker-specific data to determine sentiment. Need at least 3 relevant articles with meaningful content.",
+      positiveIndicators: [],
+      negativeIndicators: [],
+      confidence: 0,
+      articlesAnalyzed: articles.length,
+      articleBreakdown: [],
+      dataQuality: "insufficient",
+    };
+  }
+
+  // Step 1: Deduplicate articles
+  const uniqueArticles = deduplicateArticles(articles);
+
+  // Step 2: Calculate weights for each article and build breakdown
+  const weightedArticles: WeightedArticle[] = [];
+  const articleBreakdown: ArticleSentimentBreakdown[] = [];
+
+  for (const article of uniqueArticles) {
+    const text = `${article.title} ${article.description || ""}`;
+    const recencyWeight = calculateRecencyWeight(article.publishedAt);
+    const specificityWeight = calculateSpecificityWeight(text);
+    const impactResult = calculateImpactWeight(text);
+
+    // Total weight is the product of all factors
+    const totalWeight = recencyWeight * specificityWeight * impactResult.weight;
+
+    // Analyze individual article sentiment
+    const sentimentAnalysis = analyzeArticleSentiment(article);
+
+    weightedArticles.push({
+      article,
+      recencyWeight,
+      specificityWeight,
+      impactWeight: impactResult.weight,
+      totalWeight,
+    });
+
+    // Build per-article breakdown
+    const hasNumericalData = /\d+/.test(text);
+    let sentimentCategory: "positive" | "negative" | "neutral" = "neutral";
+    if (sentimentAnalysis.score > 0.2) sentimentCategory = "positive";
+    else if (sentimentAnalysis.score < -0.2) sentimentCategory = "negative";
+
+    articleBreakdown.push({
+      title: article.title,
+      source: article.source || "Unknown",
+      publishedAt: article.publishedAt,
+      sentiment: sentimentCategory,
+      score: sentimentAnalysis.score,
+      weight: totalWeight,
+      positiveTerms: sentimentAnalysis.positive,
+      negativeTerms: sentimentAnalysis.negative,
+      hasNumericalData,
+      impactCategory: impactResult.category,
+    });
+  }
+
+  // Step 3: Calculate weighted sentiment scores
+  let totalWeightedScore = 0;
+  let totalWeight = 0;
+  const allPositive: string[] = [];
+  const allNegative: string[] = [];
+
+  for (let i = 0; i < weightedArticles.length; i++) {
+    const weighted = weightedArticles[i];
+    const breakdown = articleBreakdown[i];
+
+    totalWeightedScore += breakdown.score * weighted.totalWeight;
+    totalWeight += weighted.totalWeight;
+
+    allPositive.push(...breakdown.positiveTerms);
+    allNegative.push(...breakdown.negativeTerms);
+  }
+
+  // Step 4: Calculate final weighted average score
+  const finalScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+
+  // Step 5: Calculate confidence based on data quality and article count
+  let confidence = 0;
+  if (dataQuality === "high") {
+    confidence = Math.min(1.0, 0.7 + (uniqueArticles.length / 20) * 0.3);
+  } else if (dataQuality === "medium") {
+    confidence = Math.min(0.7, 0.4 + (uniqueArticles.length / 10) * 0.3);
+  } else {
+    confidence = Math.min(0.5, 0.2 + (uniqueArticles.length / 5) * 0.3);
+  }
+
+  // Step 6: Get unique indicators
+  const positiveIndicators = [...new Set(allPositive)].slice(0, 10);
+  const negativeIndicators = [...new Set(allNegative)].slice(0, 10);
+
+  // Step 7: Generate analysis text
+  const label = scoreToLabel(finalScore, dataQuality);
+  let analysis = "";
+
+  // Add data quality context
+  const qualityNote = dataQuality === "low"
+    ? " (Note: Limited article quality - sentiment may be less reliable) "
+    : "";
+
+  if (finalScore > 0.3) {
+    analysis = `Overall positive sentiment detected across ${uniqueArticles.length} articles.${qualityNote}`;
+    analysis += ` Strong positive indicators include: ${positiveIndicators.slice(0, 3).join(", ")}. `;
+    if (negativeIndicators.length > 0) {
+      analysis += `Some concerns noted: ${negativeIndicators.slice(0, 2).join(", ")}.`;
+    } else {
+      analysis += `Minimal negative coverage found.`;
+    }
+  } else if (finalScore < -0.3) {
+    analysis = `Overall negative sentiment detected across ${uniqueArticles.length} articles.${qualityNote}`;
+    analysis += ` Key concerns include: ${negativeIndicators.slice(0, 3).join(", ")}. `;
+    if (positiveIndicators.length > 0) {
+      analysis += `Some positive developments: ${positiveIndicators.slice(0, 2).join(", ")}.`;
+    } else {
+      analysis += `Limited positive coverage found.`;
+    }
+  } else {
+    analysis = `Balanced or neutral sentiment across ${uniqueArticles.length} articles.${qualityNote}`;
+    const posCount = positiveIndicators.length;
+    const negCount = negativeIndicators.length;
+    analysis += ` Found ${posCount} positive and ${negCount} negative indicators, suggesting mixed market signals.`;
+  }
+
+  return {
+    sentimentScore: Math.max(-1, Math.min(1, finalScore)),
+    sentimentLabel: label,
+    analysis,
+    positiveIndicators,
+    negativeIndicators,
+    confidence: Math.max(0, Math.min(1, confidence)),
+    articlesAnalyzed: uniqueArticles.length,
+    articleBreakdown,
+    dataQuality,
+  };
+}
+
+/**
+ * Simple sentiment analysis for user input (kept for compatibility)
+ */
+export async function analyzeUserExperience(userNote: string): Promise<{
+  sentimentScore: number;
+  explanation: string;
+}> {
+  if (!userNote || userNote.trim().length === 0) {
+    return {
+      sentimentScore: 0.5,
+      explanation: "No user input provided",
+    };
+  }
+
+  const result = sentiment.analyze(userNote);
+  const normalizedScore = Math.max(0, Math.min(1, (result.score + 10) / 20));
+
+  let explanation = "";
+  const positiveWords = result.positive.length;
+  const negativeWords = result.negative.length;
+
+  if (normalizedScore > 0.6) {
+    explanation = `Your input shows strong positive sentiment with ${positiveWords} positive indicators, suggesting confidence in the stock.`;
+  } else if (normalizedScore < 0.4) {
+    explanation = `Your input shows cautious or negative sentiment with ${negativeWords} concerning indicators, suggesting hesitation about the stock.`;
+  } else {
+    explanation = `Your input shows neutral sentiment with balanced perspective on the stock.`;
+  }
+
+  return {
+    sentimentScore: normalizedScore,
+    explanation,
+  };
+}

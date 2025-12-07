@@ -165,8 +165,13 @@ export default function Home() {
               {sentimentData && (
                 <SentimentCard
                   sentimentScore={sentimentData.sentimentScore}
+                  sentimentLabel={sentimentData.sentimentLabel}
                   explanation={sentimentData.explanation}
                   headlines={sentimentData.headlines}
+                  positiveIndicators={sentimentData.positiveIndicators}
+                  negativeIndicators={sentimentData.negativeIndicators}
+                  confidence={sentimentData.confidence}
+                  articlesAnalyzed={sentimentData.articlesAnalyzed}
                 />
               )}
 

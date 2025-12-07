@@ -1,8 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
+import Sentiment from "sentiment";
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const sentiment = new Sentiment();
 
 export interface SentimentResult {
   sentimentScore: number; // -1 to 1
@@ -10,7 +8,7 @@ export interface SentimentResult {
 }
 
 /**
- * Analyze news headlines sentiment using Claude API
+ * Analyze news headlines sentiment using free local sentiment analysis
  */
 export async function analyzeNewsSentiment(headlines: string[]): Promise<SentimentResult> {
   try {
@@ -21,54 +19,33 @@ export async function analyzeNewsSentiment(headlines: string[]): Promise<Sentime
       };
     }
 
-    const prompt = `Analyze the following news headlines and determine the overall sentiment for the stock.
+    // Combine all headlines into one text
+    const combinedText = headlines.join(" ");
 
-Headlines:
-${headlines.map((h, i) => `${i + 1}. ${h}`).join("\n")}
+    // Analyze sentiment
+    const result = sentiment.analyze(combinedText);
 
-Please provide:
-1. A sentiment score between -1 and 1, where:
-   - -1 = Very Bearish (extremely negative)
-   - -0.5 = Bearish (negative)
-   - 0 = Neutral
-   - 0.5 = Bullish (positive)
-   - 1 = Very Bullish (extremely positive)
+    // Normalize score from sentiment library range to -1..1
+    // Sentiment library typically gives scores ranging roughly from -10 to +10
+    // We'll normalize to -1 to 1 range
+    const normalizedScore = Math.max(-1, Math.min(1, result.score / 10));
 
-2. A brief explanation (2-3 sentences) of why you assigned this score.
+    // Generate explanation based on score
+    let explanation = "";
+    const positiveWords = result.positive.length;
+    const negativeWords = result.negative.length;
 
-Format your response as JSON:
-{
-  "sentimentScore": <number>,
-  "explanation": "<string>"
-}`;
-
-    const message = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    });
-
-    const responseText = message.content[0].type === "text" ? message.content[0].text : "";
-
-    // Extract JSON from response
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Could not parse sentiment response");
+    if (normalizedScore > 0.3) {
+      explanation = `Positive sentiment detected with ${positiveWords} positive words. Headlines suggest bullish outlook with terms like: ${result.positive.slice(0, 3).join(", ")}.`;
+    } else if (normalizedScore < -0.3) {
+      explanation = `Negative sentiment detected with ${negativeWords} negative words. Headlines suggest bearish outlook with terms like: ${result.negative.slice(0, 3).join(", ")}.`;
+    } else {
+      explanation = `Neutral sentiment detected. Headlines show balanced sentiment with ${positiveWords} positive and ${negativeWords} negative indicators.`;
     }
 
-    const result = JSON.parse(jsonMatch[0]);
-
-    // Validate score is within bounds
-    const score = Math.max(-1, Math.min(1, result.sentimentScore));
-
     return {
-      sentimentScore: score,
-      explanation: result.explanation || "No explanation provided",
+      sentimentScore: normalizedScore,
+      explanation: explanation,
     };
   } catch (error) {
     console.error("Error analyzing sentiment:", error);
@@ -80,7 +57,7 @@ Format your response as JSON:
 }
 
 /**
- * Analyze user experience input and convert to score
+ * Analyze user experience input and convert to score (0 to 1)
  */
 export async function analyzeUserExperience(userNote: string): Promise<SentimentResult> {
   try {
@@ -91,51 +68,29 @@ export async function analyzeUserExperience(userNote: string): Promise<Sentiment
       };
     }
 
-    const prompt = `A user has provided their personal observation about a stock investment:
+    // Analyze sentiment of user's note
+    const result = sentiment.analyze(userNote);
 
-"${userNote}"
+    // Normalize score from sentiment library range to 0..1 (for experience score)
+    // Convert -10..10 range to 0..1 range
+    const normalizedScore = Math.max(0, Math.min(1, (result.score + 10) / 20));
 
-Based on this observation, provide:
-1. An experience score between 0 and 1, where:
-   - 0 = Very negative/pessimistic outlook
-   - 0.5 = Neutral/uncertain
-   - 1 = Very positive/optimistic outlook
+    // Generate explanation based on user's input sentiment
+    let explanation = "";
+    const positiveWords = result.positive.length;
+    const negativeWords = result.negative.length;
 
-2. A brief explanation (1-2 sentences) of why you assigned this score.
-
-Format your response as JSON:
-{
-  "sentimentScore": <number>,
-  "explanation": "<string>"
-}`;
-
-    const message = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20241022",
-      max_tokens: 1024,
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        },
-      ],
-    });
-
-    const responseText = message.content[0].type === "text" ? message.content[0].text : "";
-
-    // Extract JSON from response
-    const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      throw new Error("Could not parse experience response");
+    if (normalizedScore > 0.6) {
+      explanation = `Your input shows strong positive sentiment with ${positiveWords} positive indicators, suggesting confidence in the stock.`;
+    } else if (normalizedScore < 0.4) {
+      explanation = `Your input shows cautious or negative sentiment with ${negativeWords} concerning indicators, suggesting hesitation about the stock.`;
+    } else {
+      explanation = `Your input shows neutral sentiment with balanced perspective on the stock.`;
     }
 
-    const result = JSON.parse(jsonMatch[0]);
-
-    // Validate score is within bounds (0 to 1 for experience)
-    const score = Math.max(0, Math.min(1, result.sentimentScore));
-
     return {
-      sentimentScore: score,
-      explanation: result.explanation || "No explanation provided",
+      sentimentScore: normalizedScore,
+      explanation: explanation,
     };
   } catch (error) {
     console.error("Error analyzing user experience:", error);
