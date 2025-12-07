@@ -261,7 +261,7 @@ function scoreToLabel(score: number, dataQuality?: string): DetailedSentimentRes
  */
 function assessDataQuality(articles: NewsArticle[]): "high" | "medium" | "low" | "insufficient" {
   if (articles.length === 0) return "insufficient";
-  if (articles.length < 3) return "low";
+  if (articles.length < 3) return "insufficient";
 
   // Check content quality
   let substantiveArticles = 0;
@@ -283,6 +283,44 @@ function assessDataQuality(articles: NewsArticle[]): "high" | "medium" | "low" |
   if (substantiveArticles >= 2) return "medium";
 
   return "low";
+}
+
+/**
+ * Calculate sentiment consistency across articles
+ * Returns a value between 0.5 (completely mixed) and 1.0 (all same direction)
+ */
+function calculateSentimentConsistency(articleBreakdown: ArticleSentimentBreakdown[]): number {
+  if (articleBreakdown.length === 0) return 0.5;
+  if (articleBreakdown.length === 1) return 0.8; // Single article gets medium consistency
+
+  // Count sentiment directions
+  let positiveCount = 0;
+  let negativeCount = 0;
+  let neutralCount = 0;
+
+  for (const article of articleBreakdown) {
+    if (article.sentiment === "positive") positiveCount++;
+    else if (article.sentiment === "negative") negativeCount++;
+    else neutralCount++;
+  }
+
+  const total = articleBreakdown.length;
+
+  // Calculate alignment: what % of articles agree with the majority sentiment?
+  const maxCount = Math.max(positiveCount, negativeCount, neutralCount);
+  const alignment = maxCount / total;
+
+  // Map alignment to consistency score:
+  // 100% agreement → 1.0
+  // 80% agreement → 0.95
+  // 60% agreement → 0.85
+  // 50% or less → 0.5-0.7 (mixed sentiment)
+
+  if (alignment >= 0.8) return 0.95 + (alignment - 0.8) * 0.25; // 0.95 to 1.0
+  if (alignment >= 0.6) return 0.85 + (alignment - 0.6) * 0.5; // 0.85 to 0.95
+
+  // Below 60% agreement, we have mixed sentiment
+  return 0.5 + (alignment - 0.33) * 0.5; // 0.5 to 0.7
 }
 
 // ============================================================================
@@ -382,14 +420,25 @@ export async function analyzeNewsArticles(
   // Step 4: Calculate final weighted average score
   const finalScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
 
-  // Step 5: Calculate confidence based on data quality and article count
-  let confidence = 0;
+  // Step 5: Calculate confidence based on data quality, article count, and sentiment consistency
+  let baseConfidence = 0;
   if (dataQuality === "high") {
-    confidence = Math.min(1.0, 0.7 + (uniqueArticles.length / 20) * 0.3);
+    baseConfidence = Math.min(1.0, 0.7 + (uniqueArticles.length / 20) * 0.3);
   } else if (dataQuality === "medium") {
-    confidence = Math.min(0.7, 0.4 + (uniqueArticles.length / 10) * 0.3);
+    baseConfidence = Math.min(0.7, 0.4 + (uniqueArticles.length / 10) * 0.3);
   } else {
-    confidence = Math.min(0.5, 0.2 + (uniqueArticles.length / 5) * 0.3);
+    baseConfidence = Math.min(0.5, 0.2 + (uniqueArticles.length / 5) * 0.3);
+  }
+
+  // Calculate sentiment consistency (how aligned are the sentiments?)
+  const sentimentConsistency = calculateSentimentConsistency(articleBreakdown);
+
+  // Final confidence = base confidence * consistency factor
+  let confidence = baseConfidence * sentimentConsistency;
+
+  // Boost confidence if we have many articles (5+)
+  if (uniqueArticles.length >= 5) {
+    confidence = Math.min(1.0, confidence + 0.1);
   }
 
   // Step 6: Get unique indicators

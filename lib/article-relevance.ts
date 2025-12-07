@@ -24,85 +24,139 @@ export interface RelevanceScore {
 }
 
 /**
- * Check if an article is relevant to the ticker
+ * Trusted news domains for financial reporting
+ */
+const TRUSTED_FINANCIAL_DOMAINS = [
+  "wsj.com",
+  "bloomberg.com",
+  "reuters.com",
+  "ft.com",
+  "marketwatch.com",
+  "cnbc.com",
+  "seekingalpha.com",
+  "benzinga.com",
+  "fool.com",
+  "barrons.com",
+  "finance.yahoo.com",
+  "investing.com",
+  "financialtimes.com",
+  "businessinsider.com",
+];
+
+/**
+ * Extract domain from URL
+ */
+function getDomain(url: string): string | null {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Check if domain is trusted for financial news
+ */
+function isTrustedDomain(url?: string): boolean {
+  if (!url) return false;
+  const domain = getDomain(url);
+  if (!domain) return false;
+
+  return TRUSTED_FINANCIAL_DOMAINS.some(trusted => domain.includes(trusted));
+}
+
+/**
+ * Enhanced relevance scoring with domain credibility
+ * Score range: 0.0 to 1.0 (minimum 0.55 recommended)
  */
 export function isArticleRelevant(
   article: NewsArticle,
   tickerInfo: TickerInfo,
-  minRelevanceScore: number = 0.3
+  minRelevanceScore: number = 0.55
 ): RelevanceScore {
+  const titleLower = article.title.toLowerCase();
+  const descriptionLower = (article.description || "").toLowerCase();
   const text = `${article.title} ${article.description || ""} ${article.content || ""}`.toLowerCase();
+
   const matchedTerms: string[] = [];
-  let highestScore = 0;
+  let score = 0;
   let matchType: RelevanceScore["matchType"] = "none";
 
-  // 1. Check if ticker symbol appears in metadata
+  // 1. Title contains ticker symbol: +0.6
+  const symbolRegex = new RegExp(`\\b${escapeRegex(tickerInfo.symbol)}\\b`, "i");
+  const dollarSymbolRegex = new RegExp(`\\$${escapeRegex(tickerInfo.symbol)}\\b`, "i");
+
+  if (symbolRegex.test(titleLower) || dollarSymbolRegex.test(titleLower)) {
+    score += 0.6;
+    matchedTerms.push(tickerInfo.symbol);
+    matchType = "symbol";
+  }
+
+  // 2. Title contains company name: +0.5
+  const companyNameInTitle = tickerInfo.aliases.some(alias => {
+    if (alias.length < 3 && alias !== tickerInfo.symbol) return false;
+    const aliasRegex = new RegExp(`\\b${escapeRegex(alias)}\\b`, "i");
+    if (aliasRegex.test(titleLower)) {
+      matchedTerms.push(alias);
+      return true;
+    }
+    return false;
+  });
+
+  if (companyNameInTitle && score < 0.5) {
+    score += 0.5;
+    if (matchType === "none") matchType = "company_name";
+  }
+
+  // 3. Summary/Description contains ticker: +0.3
+  if (symbolRegex.test(descriptionLower) || dollarSymbolRegex.test(descriptionLower)) {
+    score += 0.3;
+    if (!matchedTerms.includes(tickerInfo.symbol)) {
+      matchedTerms.push(tickerInfo.symbol);
+    }
+    if (matchType === "none") matchType = "symbol";
+  }
+
+  // 4. Summary contains company name or keywords: +0.2
+  const keywordsInDescription = tickerInfo.aliases.some(alias => {
+    if (alias.length < 3 && alias !== tickerInfo.symbol) return false;
+    const aliasRegex = new RegExp(`\\b${escapeRegex(alias)}\\b`, "i");
+    if (aliasRegex.test(descriptionLower)) {
+      if (!matchedTerms.includes(alias)) {
+        matchedTerms.push(alias);
+      }
+      return true;
+    }
+    return false;
+  });
+
+  if (keywordsInDescription) {
+    score += 0.2;
+    if (matchType === "none") matchType = "alias";
+  }
+
+  // 5. Check if ticker symbol appears in metadata: +0.4
   if (article.symbols && article.symbols.length > 0) {
     const symbolMatch = article.symbols.some(
       s => s.toUpperCase() === tickerInfo.symbol.toUpperCase()
     );
     if (symbolMatch) {
-      matchedTerms.push(tickerInfo.symbol);
-      highestScore = 1.0;
-      matchType = "metadata";
-    }
-  }
-
-  // 2. Check for exact ticker symbol in text
-  const symbolRegex = new RegExp(`\\b${escapeRegex(tickerInfo.symbol)}\\b`, "i");
-  if (symbolRegex.test(text)) {
-    matchedTerms.push(tickerInfo.symbol);
-    highestScore = Math.max(highestScore, 0.9);
-    if (matchType === "none") matchType = "symbol";
-  }
-
-  // Also check with $ prefix (common in financial news)
-  const dollarSymbolRegex = new RegExp(`\\$${escapeRegex(tickerInfo.symbol)}\\b`, "i");
-  if (dollarSymbolRegex.test(text)) {
-    matchedTerms.push(`$${tickerInfo.symbol}`);
-    highestScore = Math.max(highestScore, 0.95);
-    if (matchType === "none") matchType = "symbol";
-  }
-
-  // 3. Check for company name variations
-  for (const alias of tickerInfo.aliases) {
-    // Skip very short aliases (< 3 chars) unless it's the ticker itself
-    if (alias.length < 3 && alias !== tickerInfo.symbol) continue;
-
-    const aliasRegex = new RegExp(`\\b${escapeRegex(alias)}\\b`, "i");
-    if (aliasRegex.test(text)) {
-      matchedTerms.push(alias);
-
-      // Full company name gets higher score than aliases
-      if (alias === tickerInfo.longName || alias === tickerInfo.name) {
-        highestScore = Math.max(highestScore, 0.85);
-        if (matchType === "none" || matchType === "alias") matchType = "company_name";
-      } else {
-        highestScore = Math.max(highestScore, 0.7);
-        if (matchType === "none") matchType = "alias";
+      score += 0.4;
+      if (!matchedTerms.includes(tickerInfo.symbol)) {
+        matchedTerms.push(tickerInfo.symbol);
       }
+      if (matchType === "none") matchType = "metadata";
     }
   }
 
-  // 4. Relevance score calculation
-  // Boost score if matches appear in title (more important than description)
-  const titleLower = article.title.toLowerCase();
-  let titleBoost = 0;
-
-  if (symbolRegex.test(titleLower) || dollarSymbolRegex.test(titleLower)) {
-    titleBoost = 0.2;
-  } else {
-    for (const alias of tickerInfo.aliases) {
-      if (alias.length < 3 && alias !== tickerInfo.symbol) continue;
-      const aliasRegex = new RegExp(`\\b${escapeRegex(alias)}\\b`, "i");
-      if (aliasRegex.test(titleLower)) {
-        titleBoost = 0.15;
-        break;
-      }
-    }
+  // 6. URL domain is trusted financial source: +0.2
+  if (isTrustedDomain(article.url)) {
+    score += 0.2;
   }
 
-  const finalScore = Math.min(1.0, highestScore + titleBoost);
+  // Cap score at 1.0
+  const finalScore = Math.min(1.0, score);
 
   return {
     isRelevant: finalScore >= minRelevanceScore,
@@ -118,7 +172,7 @@ export function isArticleRelevant(
 export function filterRelevantArticles(
   articles: NewsArticle[],
   tickerInfo: TickerInfo,
-  minRelevanceScore: number = 0.3
+  minRelevanceScore: number = 0.55
 ): {
   relevant: NewsArticle[];
   irrelevant: NewsArticle[];

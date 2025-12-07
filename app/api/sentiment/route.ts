@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { analyzeNewsArticles, analyzeUserExperience, type NewsArticle } from "@/lib/sentiment-advanced";
-import { fetchStockNewsMultiSource } from "@/lib/news-fetcher";
+import { fetchWithMultiQuery } from "@/lib/multi-query-fetcher";
 import { db } from "@/db/client";
 import { newsSentiments, userInputs } from "@/db/schema";
 
@@ -19,32 +19,51 @@ export async function POST(request: NextRequest) {
       let newsSources: string[] = [];
       let newsQuality: string = "unknown";
 
-      // If no articles provided, fetch from multi-source news fetcher
+      // If no articles provided, fetch using multi-query multi-source system
       if (!newsArticles || newsArticles.length === 0) {
-        console.log(`Fetching ticker-specific news for ${symbol} from multiple sources...`);
+        console.log(`Fetching ticker-specific news for ${symbol} using multi-query expansion...`);
 
-        const fetchResult = await fetchStockNewsMultiSource(symbol, {
-          minRelevanceScore: 0.3,
-          enableRelevanceFiltering: true,
-          logFiltering: true,
-          retryWithBroaderParams: true,
+        const fetchResult = await fetchWithMultiQuery(symbol, {
+          minArticles: 3,
+          targetArticles: 5,
+          minRelevanceScore: 0.55,
+          logExpansion: true,
         });
+
+        // Check if fetch was successful
+        if (!fetchResult.success) {
+          console.warn(`Multi-query fetch failed: ${fetchResult.message}`);
+          return NextResponse.json({
+            sentimentScore: 0,
+            sentimentLabel: "Insufficient Data",
+            explanation: fetchResult.message,
+            analysis: fetchResult.message,
+            positiveIndicators: [],
+            negativeIndicators: [],
+            confidence: 0,
+            articlesAnalyzed: fetchResult.relevantCount,
+            dataQuality: "insufficient",
+            fetchStats: {
+              totalFetched: fetchResult.totalFetched,
+              relevantCount: fetchResult.relevantCount,
+              queriesUsed: fetchResult.queriesUsed,
+              sourcesUsed: fetchResult.sourcesUsed,
+              relevanceRate: fetchResult.relevanceRate,
+            },
+          });
+        }
 
         newsArticles = fetchResult.articles;
-        newsSources = fetchResult.sources;
-        newsQuality = fetchResult.quality;
+        newsSources = fetchResult.sourcesUsed;
+        newsQuality = fetchResult.relevantCount >= 5 ? "high" : "medium";
 
-        console.log(`Multi-source fetch complete:`, {
-          articlesFound: newsArticles.length,
-          sources: newsSources.join(", "),
-          quality: newsQuality,
-          relevanceStats: fetchResult.relevanceStats,
+        console.log(`Multi-query fetch complete:`, {
+          articlesFound: fetchResult.relevantCount,
+          totalFetched: fetchResult.totalFetched,
+          queriesUsed: fetchResult.queriesUsed.length,
+          relevanceRate: `${(fetchResult.relevanceRate * 100).toFixed(1)}%`,
+          success: fetchResult.success,
         });
-
-        // Log relevance filtering results
-        if (fetchResult.relevanceStats) {
-          console.log(`Relevance filtering: ${fetchResult.relevanceStats.relevantArticles}/${fetchResult.relevanceStats.totalFetched} articles (${(fetchResult.relevanceStats.relevanceRate * 100).toFixed(1)}% relevant)`);
-        }
       }
 
       // Perform advanced sentiment analysis
