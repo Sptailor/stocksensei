@@ -42,48 +42,63 @@ export function SentimentCard({
   const isInsufficientData = sentimentLabel === "Insufficient Data";
 
   return (
-    <Card>
+    <Card className="glass-card glass-card-hover border-blue-500/20">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>News Sentiment Analysis</CardTitle>
-          <SentimentIcon className={`h-5 w-5 ${sentimentScore >= 0.3 ? 'text-green-600' : sentimentScore <= -0.3 ? 'text-red-600' : 'text-yellow-600'}`} />
+          <CardTitle className="text-blue-100">News Sentiment Analysis</CardTitle>
+          <SentimentIcon className={`h-6 w-6 ${sentimentScore >= 0.3 ? 'text-green-400' : sentimentScore <= -0.3 ? 'text-red-400' : 'text-yellow-400'}`} />
         </div>
-        <div className="flex items-center gap-2 mt-1.5">
+        <div className="flex items-center gap-2 mt-2 flex-wrap">
           {!isInsufficientData && (
-            <span className="text-sm text-muted-foreground">
+            <span className="text-sm text-blue-300/80 font-mono">
               Score: {sentimentScore.toFixed(2)}
             </span>
           )}
-          <Badge variant={sentiment.variant}>{displayLabel}</Badge>
+          <Badge
+            variant={sentiment.variant}
+            className={`border ${
+              sentimentScore >= 0.3
+                ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                : sentimentScore <= -0.3
+                ? 'bg-red-500/20 text-red-400 border-red-500/30'
+                : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+            }`}
+          >
+            {displayLabel}
+          </Badge>
           {!isInsufficientData && confidence !== undefined && (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs text-blue-300/60 font-mono">
               ({(confidence * 100).toFixed(0)}% confidence)
             </span>
           )}
         </div>
         {articlesAnalyzed !== undefined && articlesAnalyzed > 0 && (
-          <div className="text-xs text-muted-foreground mt-1">
+          <div className="text-xs text-blue-300/60 mt-1 font-mono">
             Analyzed {articlesAnalyzed} article{articlesAnalyzed !== 1 ? 's' : ''}
           </div>
         )}
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          <div>
-            <div className="text-sm font-medium mb-1">Analysis</div>
-            <p className="text-sm text-muted-foreground">{explanation}</p>
+          <div className="p-4 rounded-lg bg-blue-500/5 border border-blue-500/20">
+            <div className="text-sm font-semibold mb-2 text-blue-200">AI Analysis</div>
+            <p className="text-sm text-blue-300/80 leading-relaxed">{explanation}</p>
           </div>
 
           {/* Positive Indicators */}
           {positiveIndicators && positiveIndicators.length > 0 && (
             <div>
-              <div className="flex items-center gap-1.5 text-sm font-medium mb-2 text-green-600 dark:text-green-400">
-                <CheckCircle2 className="h-4 w-4" />
+              <div className="flex items-center gap-2 text-sm font-semibold mb-3 text-green-400">
+                <CheckCircle2 className="h-5 w-5" />
                 <span>Positive Signals</span>
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {positiveIndicators.slice(0, 8).map((indicator, idx) => (
-                  <Badge key={idx} variant="outline" className="text-xs border-green-200 dark:border-green-800">
+                  <Badge
+                    key={idx}
+                    variant="outline"
+                    className="text-xs bg-green-500/10 border-green-500/30 text-green-400 hover:bg-green-500/20 transition-colors"
+                  >
                     {indicator}
                   </Badge>
                 ))}
@@ -94,13 +109,17 @@ export function SentimentCard({
           {/* Negative Indicators */}
           {negativeIndicators && negativeIndicators.length > 0 && (
             <div>
-              <div className="flex items-center gap-1.5 text-sm font-medium mb-2 text-red-600 dark:text-red-400">
-                <XCircle className="h-4 w-4" />
+              <div className="flex items-center gap-2 text-sm font-semibold mb-3 text-red-400">
+                <XCircle className="h-5 w-5" />
                 <span>Negative Signals</span>
               </div>
-              <div className="flex flex-wrap gap-1.5">
+              <div className="flex flex-wrap gap-2">
                 {negativeIndicators.slice(0, 8).map((indicator, idx) => (
-                  <Badge key={idx} variant="outline" className="text-xs border-red-200 dark:border-red-800">
+                  <Badge
+                    key={idx}
+                    variant="outline"
+                    className="text-xs bg-red-500/10 border-red-500/30 text-red-400 hover:bg-red-500/20 transition-colors"
+                  >
                     {indicator}
                   </Badge>
                 ))}
@@ -111,11 +130,11 @@ export function SentimentCard({
           {/* Recent Headlines */}
           {headlines && headlines.length > 0 && (
             <div>
-              <div className="text-sm font-medium mb-2">Recent Headlines</div>
-              <ul className="space-y-1.5">
+              <div className="text-sm font-semibold mb-3 text-blue-200">Recent Headlines</div>
+              <ul className="space-y-2">
                 {headlines.slice(0, 5).map((headline, idx) => (
-                  <li key={idx} className="text-xs text-muted-foreground flex items-start gap-1.5">
-                    <span className="text-primary mt-0.5">•</span>
+                  <li key={idx} className="text-xs text-blue-300/70 flex items-start gap-2 p-2 rounded bg-blue-500/5 hover:bg-blue-500/10 transition-colors">
+                    <span className="text-blue-500 mt-0.5 font-bold">→</span>
                     <span className="flex-1">{headline}</span>
                   </li>
                 ))}

@@ -38,62 +38,74 @@ export function PredictionCard({ prediction }: PredictionCardProps) {
   };
 
   return (
-    <Card className="border-2">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Final Prediction</span>
+    <Card className="glass-card border-2 border-blue-500/30 relative overflow-hidden gradient-border">
+      {/* Animated glow effect */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 via-purple-500/5 to-pink-500/5 animate-pulse"></div>
+
+      <CardHeader className="relative z-10">
+        <CardTitle className="flex items-center justify-between text-blue-100">
+          <span className="text-2xl">Final Prediction</span>
           {getIcon()}
         </CardTitle>
-        <CardDescription>Based on comprehensive analysis</CardDescription>
+        <CardDescription className="text-blue-300/60">AI-powered market analysis</CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="relative z-10">
         <div className="space-y-6">
-          <div className="text-center">
-            <div className="text-5xl font-bold mb-2">
+          <div className="text-center p-6 rounded-xl bg-gradient-to-br from-blue-500/10 to-purple-500/10 border border-blue-500/30">
+            <div className="text-6xl font-bold mb-3 bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">
               {(prediction.finalScore * 100).toFixed(1)}%
             </div>
-            <Badge variant={getBadgeVariant(prediction.label)} className="text-lg px-4 py-1">
+            <Badge
+              variant={getBadgeVariant(prediction.label)}
+              className={`text-lg px-6 py-2 border ${
+                prediction.label === 'Bullish'
+                  ? 'bg-green-500/20 text-green-400 border-green-500/40'
+                  : prediction.label === 'Bearish'
+                  ? 'bg-red-500/20 text-red-400 border-red-500/40'
+                  : 'bg-yellow-500/20 text-yellow-400 border-yellow-500/40'
+              }`}
+            >
               {prediction.label}
             </Badge>
           </div>
 
-          <div className="space-y-3">
-            <div className="text-sm font-medium">Score Breakdown</div>
+          <div className="space-y-4">
+            <div className="text-sm font-semibold text-blue-200 mb-3">Score Breakdown</div>
 
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-muted-foreground">Technical Analysis (40%)</span>
-                <span className="font-medium">{prediction.technicalScore.toFixed(1)}%</span>
+            <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-blue-300/80 font-mono">Technical Analysis (40%)</span>
+                <span className="font-bold text-blue-100">{prediction.technicalScore.toFixed(1)}%</span>
               </div>
-              <div className="w-full bg-secondary rounded-full h-2">
+              <div className="w-full bg-slate-800/50 rounded-full h-2.5">
                 <div
-                  className="bg-blue-600 h-2 rounded-full transition-all"
+                  className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2.5 rounded-full transition-all shadow-lg shadow-blue-500/50"
                   style={{ width: `${prediction.technicalScore}%` }}
                 />
               </div>
             </div>
 
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-muted-foreground">News Sentiment (40%)</span>
-                <span className="font-medium">{(prediction.sentimentScore * 100).toFixed(1)}%</span>
+            <div className="p-3 rounded-lg bg-purple-500/5 border border-purple-500/20">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-purple-300/80 font-mono">News Sentiment (40%)</span>
+                <span className="font-bold text-purple-100">{(prediction.sentimentScore * 100).toFixed(1)}%</span>
               </div>
-              <div className="w-full bg-secondary rounded-full h-2">
+              <div className="w-full bg-slate-800/50 rounded-full h-2.5">
                 <div
-                  className="bg-purple-600 h-2 rounded-full transition-all"
+                  className="bg-gradient-to-r from-purple-500 to-pink-500 h-2.5 rounded-full transition-all shadow-lg shadow-purple-500/50"
                   style={{ width: `${prediction.sentimentScore * 100}%` }}
                 />
               </div>
             </div>
 
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-muted-foreground">User Experience (20%)</span>
-                <span className="font-medium">{(prediction.experienceScore * 100).toFixed(1)}%</span>
+            <div className="p-3 rounded-lg bg-orange-500/5 border border-orange-500/20">
+              <div className="flex justify-between text-sm mb-2">
+                <span className="text-orange-300/80 font-mono">User Experience (20%)</span>
+                <span className="font-bold text-orange-100">{(prediction.experienceScore * 100).toFixed(1)}%</span>
               </div>
-              <div className="w-full bg-secondary rounded-full h-2">
+              <div className="w-full bg-slate-800/50 rounded-full h-2.5">
                 <div
-                  className="bg-orange-600 h-2 rounded-full transition-all"
+                  className="bg-gradient-to-r from-orange-500 to-yellow-500 h-2.5 rounded-full transition-all shadow-lg shadow-orange-500/50"
                   style={{ width: `${prediction.experienceScore * 100}%` }}
                 />
               </div>

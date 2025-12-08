@@ -6,7 +6,9 @@
       "Bash(npm run dev:*)",
       "Bash(npm run:*)",
       "Bash(open http://localhost:3001)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(cat:*)",
+      "Bash(curl:*)"
     ],
     "deny": [],
     "ask": []
