@@ -13,6 +13,13 @@ yarn.lock
 /.next/
 /out/
 
+# ignore all markdown files
+*.md
+
+# except README.md
+!README.md
+
+
 # production
 /build
 
