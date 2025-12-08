@@ -82,13 +82,37 @@ export function calculateRSI(data: number[], period: number = 14): number {
   return rsi;
 }
 
+export interface TechnicalAnalysis {
+  sma20: number;
+  sma50: number;
+  ema12: number;
+  ema26: number;
+  rsi: number;
+  smaSignal: -1 | 0 | 1;
+  emaSignal: -1 | 0 | 1;
+  rsiSignal: -1 | 0 | 1;
+  rawScore: number;
+  finalScore: number;
+}
+
 /**
- * Calculate technical score based on multiple indicators
- * Returns a score between 0 and 1
+ * Calculate technical score based on 3 indicators
+ * Each indicator returns -1, 0, or +1
+ * Final score: ((raw_score + 3) / 6) * 100
+ * Returns a score between 0 and 100
  */
 export function calculateTechnicalScore(priceData: PriceData[]): number {
+  const analysis = calculateTechnicalAnalysis(priceData);
+  return analysis.finalScore;
+}
+
+/**
+ * Calculate full technical analysis with indicator values and signals
+ * @param priceData - Array of price data
+ * @returns TechnicalAnalysis object with all indicator values and final score
+ */
+export function calculateTechnicalAnalysis(priceData: PriceData[]): TechnicalAnalysis {
   const closePrices = priceData.map(d => d.close);
-  const currentPrice = closePrices[closePrices.length - 1];
 
   try {
     // Calculate indicators
@@ -98,37 +122,69 @@ export function calculateTechnicalScore(priceData: PriceData[]): number {
     const ema26 = calculateEMA(closePrices, 26);
     const rsi = calculateRSI(closePrices, 14);
 
-    // Scoring logic
-    let score = 0.5; // Start neutral
-
-    // Price vs SMA (20%)
-    if (currentPrice > sma20) score += 0.1;
-    if (currentPrice > sma50) score += 0.1;
-
-    // EMA crossover (20%)
-    if (ema12 > ema26) score += 0.2;
-
-    // RSI analysis (20%)
-    if (rsi > 70) {
-      score -= 0.1; // Overbought
-    } else if (rsi < 30) {
-      score -= 0.1; // Oversold (might bounce)
-    } else if (rsi >= 50 && rsi <= 70) {
-      score += 0.2; // Healthy bullish
-    } else if (rsi >= 30 && rsi < 50) {
-      score += 0.1; // Recovering
+    // 1. SMA Crossover Signal
+    let smaSignal: -1 | 0 | 1;
+    if (sma20 > sma50) {
+      smaSignal = 1; // Bullish
+    } else if (sma20 < sma50) {
+      smaSignal = -1; // Bearish
+    } else {
+      smaSignal = 0; // Neutral
     }
 
-    // Trend strength (20%)
-    const priceChange = (currentPrice - closePrices[0]) / closePrices[0];
-    if (priceChange > 0.05) score += 0.1;
-    if (priceChange > 0.10) score += 0.1;
+    // 2. EMA Crossover Signal
+    let emaSignal: -1 | 0 | 1;
+    if (ema12 > ema26) {
+      emaSignal = 1; // Bullish
+    } else if (ema12 < ema26) {
+      emaSignal = -1; // Bearish
+    } else {
+      emaSignal = 0; // Neutral
+    }
 
-    // Clamp between 0 and 1
-    return Math.max(0, Math.min(1, score));
+    // 3. RSI Signal
+    let rsiSignal: -1 | 0 | 1;
+    if (rsi < 30) {
+      rsiSignal = 1; // Oversold - Bullish
+    } else if (rsi > 70) {
+      rsiSignal = -1; // Overbought - Bearish
+    } else {
+      rsiSignal = 0; // Neutral
+    }
+
+    // Calculate raw score (sum of signals: -3 to +3)
+    const rawScore = smaSignal + emaSignal + rsiSignal;
+
+    // Normalize to 0-100
+    const finalScore = ((rawScore + 3) / 6) * 100;
+
+    return {
+      sma20,
+      sma50,
+      ema12,
+      ema26,
+      rsi,
+      smaSignal,
+      emaSignal,
+      rsiSignal,
+      rawScore,
+      finalScore,
+    };
   } catch (error) {
-    console.error("Error calculating technical score:", error);
-    return 0.5; // Return neutral on error
+    console.error("Error calculating technical analysis:", error);
+    // Return neutral values on error
+    return {
+      sma20: 0,
+      sma50: 0,
+      ema12: 0,
+      ema26: 0,
+      rsi: 50,
+      smaSignal: 0,
+      emaSignal: 0,
+      rsiSignal: 0,
+      rawScore: 0,
+      finalScore: 50,
+    };
   }
 }
 

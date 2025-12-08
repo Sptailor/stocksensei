@@ -63,12 +63,12 @@ export function PredictionCard({ prediction }: PredictionCardProps) {
             <div>
               <div className="flex justify-between text-sm mb-1">
                 <span className="text-muted-foreground">Technical Analysis (40%)</span>
-                <span className="font-medium">{(prediction.technicalScore * 100).toFixed(1)}%</span>
+                <span className="font-medium">{prediction.technicalScore.toFixed(1)}%</span>
               </div>
               <div className="w-full bg-secondary rounded-full h-2">
                 <div
                   className="bg-blue-600 h-2 rounded-full transition-all"
-                  style={{ width: `${prediction.technicalScore * 100}%` }}
+                  style={{ width: `${prediction.technicalScore}%` }}
                 />
               </div>
             </div>

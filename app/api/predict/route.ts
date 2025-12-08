@@ -22,13 +22,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "All scores required" }, { status: 400 });
     }
 
-    // Normalize sentiment score from -1..1 to 0..1
+    // Normalize scores to 0-1 range
+    // Technical score comes in as 0-100, normalize to 0-1
+    const normalizedTechnical = technicalScore / 100;
+
+    // Sentiment score from -1..1 to 0..1
     const normalizedSentiment = normalizeSentiment(sentimentScore);
 
     // Calculate final score using the formula:
     // finalScore = (0.4 * technical) + (0.4 * sentiment) + (0.2 * experience)
     const finalScore =
-      0.4 * technicalScore + 0.4 * normalizedSentiment + 0.2 * experienceScore;
+      0.4 * normalizedTechnical + 0.4 * normalizedSentiment + 0.2 * experienceScore;
 
     // Clamp to 0-1 range
     const clampedScore = Math.max(0, Math.min(1, finalScore));
@@ -45,12 +49,13 @@ export async function POST(request: NextRequest) {
       },
       rawScores: {
         technical: technicalScore,
+        technicalNormalized: normalizedTechnical,
         sentiment: sentimentScore,
         sentimentNormalized: normalizedSentiment,
         experience: experienceScore,
       },
       calculation: {
-        technicalContribution: 0.4 * technicalScore,
+        technicalContribution: 0.4 * normalizedTechnical,
         sentimentContribution: 0.4 * normalizedSentiment,
         experienceContribution: 0.2 * experienceScore,
       },
