@@ -196,7 +196,7 @@ export default function Home() {
               {!prediction && (
                 <Button
                   onClick={handleGeneratePrediction}
-                  className="w-full h-14 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 hover:from-blue-500 hover:via-purple-500 hover:to-pink-500 text-white font-bold text-lg shadow-2xl shadow-purple-500/40 hover:shadow-purple-500/60 transition-all relative overflow-hidden group"
+                  className="w-full h-14 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-lg shadow-2xl shadow-emerald-500/30 hover:shadow-emerald-500/50 transition-all relative overflow-hidden group border border-emerald-400/20"
                   size="lg"
                   disabled={predictionMutation.isPending || sentimentMutation.isPending}
                 >
