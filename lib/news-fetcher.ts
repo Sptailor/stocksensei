@@ -67,13 +67,13 @@ async function fetchYahooFinanceNews(symbol: string): Promise<NewsArticle[]> {
     const searchResult = await yahooFinance.search(symbol);
     if (searchResult.news && searchResult.news.length > 0) {
       return searchResult.news.slice(0, 15).map((item: Record<string, unknown>) => ({
-        title: item.title || "",
-        description: item.summary || item.description || "",
-        content: item.content || item.summary || "",
-        publishedAt: new Date(item.providerPublishTime || Date.now()),
-        source: item.publisher || "Yahoo Finance",
-        url: item.link || "",
-        quality: assessArticleQuality(item.title || "", item.summary || ""),
+        title: (item.title as string) || "",
+        description: (item.summary as string) || (item.description as string) || "",
+        content: (item.content as string) || (item.summary as string) || "",
+        publishedAt: new Date((item.providerPublishTime as number) || Date.now()),
+        source: (item.publisher as string) || "Yahoo Finance",
+        url: (item.link as string) || "",
+        quality: assessArticleQuality((item.title as string) || "", (item.summary as string) || ""),
       }));
     }
 
