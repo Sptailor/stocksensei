@@ -45,7 +45,7 @@ export async function GET(request: NextRequest) {
           symbol: symbol.toUpperCase(),
           name: quote.name,
           lastPrice: quote.price,
-          historicalData: history as Record<string, unknown>[],
+          historicalData: history as unknown as Record<string, unknown>[],
           lastUpdated: new Date(),
         })
         .onConflictDoUpdate({
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
           set: {
             name: quote.name,
             lastPrice: quote.price,
-            historicalData: history as Record<string, unknown>[],
+            historicalData: history as unknown as Record<string, unknown>[],
             lastUpdated: new Date(),
           },
         });
