@@ -126,28 +126,28 @@ export async function getStockNews(symbol: string): Promise<Array<{
   try {
     // Fetch news using quoteSummary with news module
     const result = await yahooFinance.quoteSummary(symbol, {
-      modules: ["recommendationTrend", "news"] as any,
+      modules: ["recommendationTrend", "news"] as string[],
     });
 
     // Try to get news from the result
-    const newsData = (result as any).news || [];
+    const newsData = (result as Record<string, unknown>).news || [];
 
-    if (newsData.length > 0) {
-      return newsData.slice(0, 20).map((item: any) => ({
-        title: item.title || item.headline || "",
-        description: item.summary || item.description || "",
+    if (Array.isArray(newsData) && newsData.length > 0) {
+      return newsData.slice(0, 20).map((item: Record<string, unknown>) => ({
+        title: (item.title as string) || (item.headline as string) || "",
+        description: (item.summary as string) || (item.description as string) || "",
         publishedAt: item.providerPublishTime
-          ? new Date(item.providerPublishTime * 1000)
+          ? new Date((item.providerPublishTime as number) * 1000)
           : new Date(),
-        source: item.publisher || "Yahoo Finance",
-        url: item.link || item.url || "",
+        source: (item.publisher as string) || "Yahoo Finance",
+        url: (item.link as string) || (item.url as string) || "",
       }));
     }
 
     // Fallback: Try search results
     const searchResult = await yahooFinance.search(symbol);
     if (searchResult.news && searchResult.news.length > 0) {
-      return searchResult.news.slice(0, 20).map((item: any) => ({
+      return searchResult.news.slice(0, 20).map((item: Record<string, unknown>) => ({
         title: item.title || "",
         description: item.summary || "",
         publishedAt: new Date(item.providerPublishTime || Date.now()),

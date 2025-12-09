@@ -3,7 +3,6 @@ import { getStockQuote, getStockHistory, convertToPriceData, searchStocks } from
 import { calculateTechnicalScore, getIndicatorDetails } from "@/lib/indicators";
 import { db } from "@/db/client";
 import { stocks } from "@/db/schema";
-import { eq } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
   try {
@@ -46,7 +45,7 @@ export async function GET(request: NextRequest) {
           symbol: symbol.toUpperCase(),
           name: quote.name,
           lastPrice: quote.price,
-          historicalData: history as any,
+          historicalData: history as Record<string, unknown>[],
           lastUpdated: new Date(),
         })
         .onConflictDoUpdate({
@@ -54,11 +53,11 @@ export async function GET(request: NextRequest) {
           set: {
             name: quote.name,
             lastPrice: quote.price,
-            historicalData: history as any,
+            historicalData: history as Record<string, unknown>[],
             lastUpdated: new Date(),
           },
         });
-    } catch (dbError) {
+    } catch {
       console.warn("Database storage failed (this is expected with placeholder DB)");
     }
 

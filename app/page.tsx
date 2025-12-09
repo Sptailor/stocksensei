@@ -13,11 +13,35 @@ import { PredictionHistory } from "@/components/prediction-history";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 
+interface SentimentData {
+  sentimentScore: number;
+  sentimentLabel: string;
+  explanation: string;
+  headlines?: string[];
+  positiveIndicators?: string[];
+  negativeIndicators?: string[];
+  confidence?: number;
+  articlesAnalyzed?: number;
+}
+
+interface ExperienceData {
+  experienceScore: number;
+  explanation: string;
+}
+
+interface PredictionData {
+  finalScore: number;
+  label: string;
+  technicalScore: number;
+  sentimentScore: number;
+  experienceScore: number;
+}
+
 export default function Home() {
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
-  const [sentimentData, setSentimentData] = useState<any>(null);
-  const [experienceData, setExperienceData] = useState<any>(null);
-  const [prediction, setPrediction] = useState<any>(null);
+  const [sentimentData, setSentimentData] = useState<SentimentData | null>(null);
+  const [experienceData, setExperienceData] = useState<ExperienceData | null>(null);
+  const [prediction, setPrediction] = useState<PredictionData | null>(null);
 
   // Fetch stock data
   const { data: stockData, isLoading: isLoadingStock } = useQuery({

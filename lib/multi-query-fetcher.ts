@@ -4,7 +4,7 @@
  */
 
 import { getTickerInfo, type TickerInfo } from "./ticker-resolver";
-import { generateExpandedQueries, getQueryBatches, logQueryExpansion } from "./query-expansion";
+import { getQueryBatches, logQueryExpansion } from "./query-expansion";
 import { filterRelevantArticles } from "./article-relevance";
 import type { NewsArticle } from "./news-fetcher";
 
@@ -95,13 +95,13 @@ async function fetchFromYahooWithQuery(query: string): Promise<NewsArticle[]> {
       return [];
     }
 
-    return searchResult.news.slice(0, 20).map((item: any) => ({
-      title: item.title || "",
-      description: item.summary || item.description || "",
-      content: item.content || item.summary || "",
-      publishedAt: new Date(item.providerPublishTime || Date.now()),
-      source: item.publisher || "Yahoo Finance",
-      url: item.link || "",
+    return searchResult.news.slice(0, 20).map((item: Record<string, unknown>) => ({
+      title: (item.title as string) || "",
+      description: (item.summary as string) || (item.description as string) || "",
+      content: (item.content as string) || (item.summary as string) || "",
+      publishedAt: new Date((item.providerPublishTime as number) || Date.now()),
+      source: (item.publisher as string) || "Yahoo Finance",
+      url: (item.link as string) || "",
       symbols: [], // Yahoo search doesn't provide symbols in metadata
       quality: "medium" as const,
     }));

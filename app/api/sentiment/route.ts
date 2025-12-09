@@ -82,12 +82,12 @@ export async function POST(request: NextRequest) {
         try {
           await db.insert(newsSentiments).values({
             stockSymbol: symbol.toUpperCase(),
-            headlines: newsArticles.map(a => a.title) as any,
+            headlines: newsArticles.map(a => a.title) as string[],
             sentimentScore: result.sentimentScore,
             explanation: result.analysis,
           });
-        } catch (dbError) {
-          console.warn("Database storage failed (expected in demo mode):", dbError);
+        } catch {
+          console.warn("Database storage failed (expected in demo mode)");
         }
       }
 

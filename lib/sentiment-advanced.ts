@@ -186,7 +186,7 @@ function analyzeArticleSentiment(article: NewsArticle): {
   }
 
   // Combine library sentiment with custom terms
-  let customScore = (foundPositive.length - foundNegative.length) * 2;
+  const customScore = (foundPositive.length - foundNegative.length) * 2;
   let combinedScore = (baseResult.score + customScore) / 10; // Normalize
 
   // Clamp to -1..1

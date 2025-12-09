@@ -38,35 +38,35 @@ async function fetchYahooFinanceNews(symbol: string): Promise<NewsArticle[]> {
     // Try quoteSummary first
     try {
       const result = await yahooFinance.quoteSummary(symbol, {
-        modules: ["recommendationTrend"] as any,
+        modules: ["recommendationTrend"] as string[],
       });
 
-      const newsData = (result as any).news || [];
+      const newsData = (result as Record<string, unknown>).news || [];
 
-      if (newsData.length > 0) {
-        return newsData.map((item: any) => ({
-          title: item.title || item.headline || "",
-          description: item.summary || item.description || item.title || "",
-          content: item.content || item.summary || "",
+      if (Array.isArray(newsData) && newsData.length > 0) {
+        return newsData.map((item: Record<string, unknown>) => ({
+          title: (item.title as string) || (item.headline as string) || "",
+          description: (item.summary as string) || (item.description as string) || (item.title as string) || "",
+          content: (item.content as string) || (item.summary as string) || "",
           publishedAt: item.providerPublishTime
-            ? new Date(item.providerPublishTime * 1000)
+            ? new Date((item.providerPublishTime as number) * 1000)
             : new Date(),
-          source: item.publisher || "Yahoo Finance",
-          url: item.link || item.url || "",
+          source: (item.publisher as string) || "Yahoo Finance",
+          url: (item.link as string) || (item.url as string) || "",
           quality: assessArticleQuality(
-            item.title || "",
-            item.summary || item.description || ""
+            (item.title as string) || "",
+            (item.summary as string) || (item.description as string) || ""
           ),
         }));
       }
-    } catch (summaryError) {
+    } catch {
       console.log("Yahoo quoteSummary failed, trying search...");
     }
 
     // Fallback to search
     const searchResult = await yahooFinance.search(symbol);
     if (searchResult.news && searchResult.news.length > 0) {
-      return searchResult.news.slice(0, 15).map((item: any) => ({
+      return searchResult.news.slice(0, 15).map((item: Record<string, unknown>) => ({
         title: item.title || "",
         description: item.summary || item.description || "",
         content: item.content || item.summary || "",
@@ -115,14 +115,14 @@ async function fetchFinnhubNews(symbol: string): Promise<NewsArticle[]> {
       return [];
     }
 
-    return data.slice(0, 20).map((item: any) => ({
-      title: item.headline || "",
-      description: item.summary || item.headline || "",
-      content: item.summary || "",
-      publishedAt: new Date(item.datetime * 1000),
-      source: item.source || "Finnhub",
-      url: item.url || "",
-      quality: assessArticleQuality(item.headline || "", item.summary || ""),
+    return data.slice(0, 20).map((item: Record<string, unknown>) => ({
+      title: (item.headline as string) || "",
+      description: (item.summary as string) || (item.headline as string) || "",
+      content: (item.summary as string) || "",
+      publishedAt: new Date((item.datetime as number) * 1000),
+      source: (item.source as string) || "Finnhub",
+      url: (item.url as string) || "",
+      quality: assessArticleQuality((item.headline as string) || "", (item.summary as string) || ""),
     }));
   } catch (error) {
     console.error("Finnhub fetch error:", error);
@@ -156,14 +156,14 @@ async function fetchMarketAuxNews(symbol: string): Promise<NewsArticle[]> {
       return [];
     }
 
-    return data.data.slice(0, 20).map((item: any) => ({
-      title: item.title || "",
-      description: item.description || item.snippet || item.title || "",
-      content: item.description || item.snippet || "",
-      publishedAt: new Date(item.published_at),
-      source: item.source || "MarketAux",
-      url: item.url || "",
-      quality: assessArticleQuality(item.title || "", item.description || item.snippet || ""),
+    return data.data.slice(0, 20).map((item: Record<string, unknown>) => ({
+      title: (item.title as string) || "",
+      description: (item.description as string) || (item.snippet as string) || (item.title as string) || "",
+      content: (item.description as string) || (item.snippet as string) || "",
+      publishedAt: new Date(item.published_at as string),
+      source: (item.source as string) || "MarketAux",
+      url: (item.url as string) || "",
+      quality: assessArticleQuality((item.title as string) || "", (item.description as string) || (item.snippet as string) || ""),
     }));
   } catch (error) {
     console.error("MarketAux fetch error:", error);
@@ -197,14 +197,14 @@ async function fetchAlphaVantageNews(symbol: string): Promise<NewsArticle[]> {
       return [];
     }
 
-    return data.feed.slice(0, 20).map((item: any) => ({
-      title: item.title || "",
-      description: item.summary || item.title || "",
-      content: item.summary || "",
-      publishedAt: new Date(item.time_published),
-      source: item.source || "Alpha Vantage",
-      url: item.url || "",
-      quality: assessArticleQuality(item.title || "", item.summary || ""),
+    return data.feed.slice(0, 20).map((item: Record<string, unknown>) => ({
+      title: (item.title as string) || "",
+      description: (item.summary as string) || (item.title as string) || "",
+      content: (item.summary as string) || "",
+      publishedAt: new Date(item.time_published as string),
+      source: (item.source as string) || "Alpha Vantage",
+      url: (item.url as string) || "",
+      quality: assessArticleQuality((item.title as string) || "", (item.summary as string) || ""),
     }));
   } catch (error) {
     console.error("Alpha Vantage fetch error:", error);
@@ -357,7 +357,7 @@ export async function fetchStockNewsMultiSource(
     { name: "Alpha Vantage", fetcher: fetchAlphaVantageNews, priority: 4 },
   ];
 
-  let allArticles: NewsArticle[] = [];
+  const allArticles: NewsArticle[] = [];
   const successfulSources: string[] = [];
 
   // Try each source in priority order

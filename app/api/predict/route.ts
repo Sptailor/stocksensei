@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
         experienceScore,
         finalScore: clampedScore,
         label,
-        details: details as any,
+        details: details as Record<string, unknown>,
       })
       .returning();
 
@@ -103,11 +103,9 @@ export async function GET(request: NextRequest) {
     const symbol = searchParams.get("symbol");
     const limit = parseInt(searchParams.get("limit") || "10");
 
-    let query = db.select().from(predictions);
-
-    if (symbol) {
-      query = query.where(eq(predictions.stockSymbol, symbol.toUpperCase())) as any;
-    }
+    const query = symbol
+      ? db.select().from(predictions).where(eq(predictions.stockSymbol, symbol.toUpperCase()))
+      : db.select().from(predictions);
 
     const results = await query.orderBy(desc(predictions.createdAt)).limit(limit);
 

@@ -77,7 +77,6 @@ export function isArticleRelevant(
 ): RelevanceScore {
   const titleLower = article.title.toLowerCase();
   const descriptionLower = (article.description || "").toLowerCase();
-  const text = `${article.title} ${article.description || ""} ${article.content || ""}`.toLowerCase();
 
   const matchedTerms: string[] = [];
   let score = 0;
