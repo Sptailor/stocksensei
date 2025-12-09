@@ -9,17 +9,10 @@ if (!process.env.DATABASE_URL) {
 // Check if using placeholder database URL
 const isPlaceholder = process.env.DATABASE_URL.includes("placeholder");
 
-let pool: Pool;
-let db: ReturnType<typeof drizzle>;
+const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 if (isPlaceholder) {
-  // Create a mock pool for demo purposes
   console.warn("⚠️ Using placeholder database - database features will not work");
-  pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  db = drizzle(pool, { schema });
-} else {
-  pool = new Pool({ connectionString: process.env.DATABASE_URL });
-  db = drizzle(pool, { schema });
 }
 
-export { db };
+export const db = drizzle(pool, { schema });

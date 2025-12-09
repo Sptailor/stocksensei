@@ -3,6 +3,7 @@ import { analyzeNewsArticles, analyzeUserExperience, type NewsArticle } from "@/
 import { fetchWithMultiQuery } from "@/lib/multi-query-fetcher";
 import { db } from "@/db/client";
 import { newsSentiments, userInputs } from "@/db/schema";
+import { eq, desc } from "drizzle-orm";
 
 export async function POST(request: NextRequest) {
   try {
@@ -160,10 +161,14 @@ export async function GET(request: NextRequest) {
 
     // Fetch latest sentiment from database
     try {
-      const latestSentiment = await db.query.newsSentiments.findFirst({
-        where: (sentiments, { eq }) => eq(sentiments.stockSymbol, symbol.toUpperCase()),
-        orderBy: (sentiments, { desc }) => [desc(sentiments.analyzedAt)],
-      });
+      const results = await db
+        .select()
+        .from(newsSentiments)
+        .where(eq(newsSentiments.stockSymbol, symbol.toUpperCase()))
+        .orderBy(desc(newsSentiments.analyzedAt))
+        .limit(1);
+
+      const latestSentiment = results[0];
 
       if (latestSentiment) {
         return NextResponse.json({
@@ -175,8 +180,8 @@ export async function GET(request: NextRequest) {
       }
 
       return NextResponse.json({ error: "No sentiment data found for this symbol" }, { status: 404 });
-    } catch (dbError) {
-      console.warn("Database query failed:", dbError);
+    } catch {
+      console.warn("Database query failed");
       return NextResponse.json({ error: "Database unavailable" }, { status: 503 });
     }
   } catch (error) {
