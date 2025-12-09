@@ -19,34 +19,6 @@ AI-powered stock analysis platform combining technical indicators, news sentimen
 - **Yahoo Finance API** for stock data
 - **shadcn/ui** + TailwindCSS
 
-## Setup
-
-1. **Install dependencies**
-   ```bash
-   npm install
-   ```
-
-2. **Environment variables**
-
-   Create a `.env` file:
-   ```env
-   DATABASE_URL=your_neon_postgres_url
-   ANTHROPIC_API_KEY=your_anthropic_api_key
-   ```
-
-3. **Database setup**
-   ```bash
-   npm run db:generate
-   npm run db:migrate
-   ```
-
-4. **Run development server**
-   ```bash
-   npm run dev
-   ```
-
-   Open [http://localhost:3000](http://localhost:3000)
-
 ## Project Structure
 
 ```
