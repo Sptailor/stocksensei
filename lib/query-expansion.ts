@@ -91,7 +91,7 @@ function getTickerSpecificQueries(symbol: string): ExpandedQuery[] {
     MSFT: ["Windows", "Azure", "Office 365", "Satya Nadella", "Xbox", "Microsoft Teams", "AI Copilot"],
     GOOGL: ["Google Search", "Sundar Pichai", "YouTube", "Android", "Google Cloud", "Pixel", "Chrome"],
     GOOG: ["Google Search", "Sundar Pichai", "YouTube", "Android", "Google Cloud", "Pixel", "Chrome"],
-    AMZN: ["AWS", "Jeff Bezos", "Andy Jassy", "Amazon Prime", "Alexa", "Amazon Web Services"],
+    AMZN: ["AWS", "Jeff Bezos", "Andy Jassy", "Amazon Prime", "Alexa", "Amazon Web Services", "Amazon retail", "e-commerce", "Prime Day"],
     META: ["Facebook", "Instagram", "WhatsApp", "Mark Zuckerberg", "Meta Quest", "Threads", "Metaverse"],
     NVDA: ["Nvidia GPU", "Jensen Huang", "RTX", "AI chips", "CUDA", "GeForce"],
 
@@ -105,7 +105,6 @@ function getTickerSpecificQueries(symbol: string): ExpandedQuery[] {
 
     // Retail
     WMT: ["Walmart stores", "Doug McMillon", "Walmart earnings", "retail sales"],
-    AMZN: ["Amazon retail", "e-commerce", "Prime Day"],
     COST: ["Costco warehouse", "membership"],
 
     // Healthcare/Pharma

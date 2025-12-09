@@ -32,6 +32,7 @@
     "@types/node": "^22.9.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
+    "@types/sentiment": "^5.0.4",
     "autoprefixer": "^10.4.20",
     "drizzle-kit": "^0.29.0",
     "eslint": "^9.14.0",

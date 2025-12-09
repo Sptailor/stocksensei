@@ -148,11 +148,11 @@ export async function getStockNews(symbol: string): Promise<Array<{
     const searchResult = await yahooFinance.search(symbol);
     if (searchResult.news && searchResult.news.length > 0) {
       return searchResult.news.slice(0, 20).map((item: Record<string, unknown>) => ({
-        title: item.title || "",
-        description: item.summary || "",
-        publishedAt: new Date(item.providerPublishTime || Date.now()),
-        source: item.publisher || "Yahoo Finance",
-        url: item.link || "",
+        title: (item.title as string) || "",
+        description: (item.summary as string) || "",
+        publishedAt: new Date((item.providerPublishTime as number) || Date.now()),
+        source: (item.publisher as string) || "Yahoo Finance",
+        url: (item.link as string) || "",
       }));
     }
 
@@ -187,11 +187,11 @@ export async function searchStocks(query: string): Promise<Array<{ symbol: strin
     const result = await yahooFinance.search(query);
 
     return result.quotes
-      .filter((q) => q.quoteType === "EQUITY")
+      .filter((q) => 'quoteType' in q && q.quoteType === "EQUITY")
       .slice(0, 10)
       .map((q) => ({
         symbol: q.symbol,
-        name: q.longname || q.shortname || q.symbol,
+        name: ('longname' in q && q.longname) || ('shortname' in q && q.shortname) || q.symbol,
       }));
   } catch (error) {
     console.error(`Error searching for ${query}:`, error);

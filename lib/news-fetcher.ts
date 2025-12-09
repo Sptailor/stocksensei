@@ -447,12 +447,16 @@ export async function fetchStockNewsMultiSource(
 
   // Sort by quality and recency
   uniqueArticles.sort((a, b) => {
-    const qualityWeight = { high: 3, medium: 2, low: 1 };
-    const qualityDiff = qualityWeight[b.quality] - qualityWeight[a.quality];
+    const qualityWeight: Record<string, number> = { high: 3, medium: 2, low: 1 };
+    const qualityDiff = qualityWeight[b.quality || 'low'] - qualityWeight[a.quality || 'low'];
 
     if (qualityDiff !== 0) return qualityDiff;
 
-    return b.publishedAt.getTime() - a.publishedAt.getTime();
+    // Handle both Date and string types for publishedAt
+    const aTime = typeof a.publishedAt === 'string' ? new Date(a.publishedAt).getTime() : a.publishedAt.getTime();
+    const bTime = typeof b.publishedAt === 'string' ? new Date(b.publishedAt).getTime() : b.publishedAt.getTime();
+
+    return bTime - aTime;
   });
 
   // Determine overall quality
