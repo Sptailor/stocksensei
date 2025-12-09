@@ -38,7 +38,7 @@ async function fetchYahooFinanceNews(symbol: string): Promise<NewsArticle[]> {
     // Try quoteSummary first
     try {
       const result = await yahooFinance.quoteSummary(symbol, {
-        modules: ["recommendationTrend"] as string[],
+        modules: ["recommendationTrend"],
       });
 
       const newsData = (result as Record<string, unknown>).news || [];

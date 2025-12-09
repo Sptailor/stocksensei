@@ -126,7 +126,7 @@ export async function getStockNews(symbol: string): Promise<Array<{
   try {
     // Fetch news using quoteSummary with news module
     const result = await yahooFinance.quoteSummary(symbol, {
-      modules: ["recommendationTrend", "news"] as string[],
+      modules: ["recommendationTrend"],
     });
 
     // Try to get news from the result
