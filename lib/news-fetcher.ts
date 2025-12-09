@@ -9,13 +9,13 @@ import { filterRelevantArticles, logRelevanceFiltering } from "./article-relevan
 
 export interface NewsArticle {
   title: string;
-  description: string;
+  description?: string;
   content?: string;
-  publishedAt: Date;
-  source: string;
+  publishedAt: Date | string;
+  source?: string;
   url?: string;
   symbols?: string[]; // Ticker symbols mentioned in article metadata
-  quality: "high" | "medium" | "low";
+  quality?: "high" | "medium" | "low";
 }
 
 interface NewsSource {
