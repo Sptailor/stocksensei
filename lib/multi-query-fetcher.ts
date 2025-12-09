@@ -176,7 +176,7 @@ export async function fetchWithMultiQuery(
 
       if (articles.length > 0) {
         queriesUsed.push(query.query);
-        articles.forEach(a => sourcesUsed.add(a.source));
+        articles.forEach(a => a.source && sourcesUsed.add(a.source));
       }
 
       return articles;
