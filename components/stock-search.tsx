@@ -36,7 +36,7 @@ export function StockSearch({ onSelectStock }: StockSearchProps) {
   const [search, setSearch] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [filteredStocks, setFilteredStocks] = useState(POPULAR_STOCKS);
-  const searchRef = useRef<HTMLDivElement>(null);
+  const searchRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
