@@ -2,6 +2,8 @@
 
 AI-powered stock analysis platform combining technical indicators, news sentiment, and user insights.
 
+🔗 **Live Demo:** [https://stocksensei-five.vercel.app/](https://stocksensei-five.vercel.app/)
+
 ## Features
 
 - 🔍 Real-time stock quotes and historical data
