@@ -402,6 +402,7 @@ export function getVolumeAnalysis(priceData: PriceData[]) {
       volumeMetrics,
       compressionZones,
       breakouts,
+      dataLength: priceData.length,
     };
   } catch (error) {
     console.error("Error in volume analysis:", error);
@@ -415,6 +416,7 @@ export function getVolumeAnalysis(priceData: PriceData[]) {
       },
       compressionZones: [],
       breakouts: [],
+      dataLength: 0,
     };
   }
 }

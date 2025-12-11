@@ -36,11 +36,11 @@ export async function POST(request: NextRequest) {
     const insights: string[] = [];
 
     if (volumeAnalysis) {
-      const { volumeMetrics, compressionZones, breakouts } = volumeAnalysis;
+      const { volumeMetrics, compressionZones, breakouts, dataLength } = volumeAnalysis;
 
-      // Check if currently in compression
+      // Check if currently in compression (zone ends within last 5 bars)
       const inCompression = compressionZones.some(
-        (zone: { endIndex: number }) => zone.endIndex >= volumeAnalysis.compressionZones.length - 5
+        (zone: { endIndex: number }) => zone.endIndex >= dataLength - 5
       );
 
       if (inCompression) {
@@ -49,9 +49,9 @@ export async function POST(request: NextRequest) {
         volumeSignal -= 0.05; // Slightly bearish when compressed
       }
 
-      // Check for recent breakouts
+      // Check for recent breakouts (occurred within last 10 bars)
       const recentBreakout = breakouts.find(
-        (b: { index: number }) => b.index >= breakouts.length - 10
+        (b: { index: number }) => b.index >= dataLength - 10
       );
 
       if (recentBreakout) {
