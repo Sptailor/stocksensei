@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStockQuote, getStockHistory, convertToPriceData, searchStocks } from "@/lib/yahoo";
-import { calculateTechnicalScore, getIndicatorDetails } from "@/lib/indicators";
+import { calculateTechnicalScore, getIndicatorDetails, getVolumeAnalysis } from "@/lib/indicators";
 import { db } from "@/db/client";
 import { stocks } from "@/db/schema";
 
@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
     const priceData = convertToPriceData(history);
     const technicalScore = calculateTechnicalScore(priceData);
     const indicators = getIndicatorDetails(priceData);
+    const volumeAnalysis = getVolumeAnalysis(priceData);
 
     // Store in database (skip if using placeholder)
     try {
@@ -66,6 +67,7 @@ export async function GET(request: NextRequest) {
       history,
       technicalScore,
       indicators,
+      volumeAnalysis,
     });
   } catch (error) {
     console.error("Stock API error:", error);

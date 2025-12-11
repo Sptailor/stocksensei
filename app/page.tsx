@@ -192,10 +192,14 @@ export default function Home() {
             {/* Left Column */}
             <div className="lg:col-span-2 space-y-6">
               <StockQuoteCard quote={stockData.quote} />
-              <StockChart data={stockData.history} />
+              <StockChart
+                data={stockData.history}
+                volumeAnalysis={stockData.volumeAnalysis}
+              />
               <TechnicalIndicatorsCard
                 indicators={stockData.indicators}
                 score={stockData.technicalScore}
+                volumeAnalysis={stockData.volumeAnalysis}
               />
 
               {sentimentData && (

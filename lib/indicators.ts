@@ -82,6 +82,31 @@ export function calculateRSI(data: number[], period: number = 14): number {
   return rsi;
 }
 
+export interface VolumeMetrics {
+  avgVolume20: number;
+  relativeVolume: number;
+  isHighVolume: boolean;
+  isLowVolume: boolean;
+  volumeSpikes: number[]; // indices where volume spiked
+}
+
+export interface CompressionZone {
+  startIndex: number;
+  endIndex: number;
+  highPrice: number;
+  lowPrice: number;
+  avgVolume: number;
+}
+
+export interface Breakout {
+  index: number;
+  type: 'bullish' | 'bearish';
+  confirmed: boolean; // volume confirmation
+  price: number;
+  volume: number;
+  relativeVolume: number;
+}
+
 export interface TechnicalAnalysis {
   sma20: number;
   sma50: number;
@@ -93,6 +118,9 @@ export interface TechnicalAnalysis {
   rsiSignal: -1 | 0 | 1;
   rawScore: number;
   finalScore: number;
+  volumeMetrics?: VolumeMetrics;
+  compressionZones?: CompressionZone[];
+  breakouts?: Breakout[];
 }
 
 /**
@@ -206,5 +234,187 @@ export function getIndicatorDetails(priceData: PriceData[]) {
   } catch (error) {
     console.error("Error getting indicator details:", error);
     return null;
+  }
+}
+
+// ============================================================================
+// VOLUME ANALYSIS FUNCTIONS
+// ============================================================================
+
+/**
+ * Calculate volume metrics including average volume and relative volume
+ */
+export function calculateVolumeMetrics(priceData: PriceData[]): VolumeMetrics {
+  const volumes = priceData.map(d => d.volume);
+
+  // Calculate 20-period average volume
+  const avgVolume20 = calculateSMA(volumes, 20);
+
+  // Current relative volume (RVOL)
+  const currentVolume = volumes[volumes.length - 1];
+  const relativeVolume = currentVolume / avgVolume20;
+
+  // Identify volume spikes (RVOL >= 1.5)
+  const volumeSpikes: number[] = [];
+  for (let i = Math.max(0, volumes.length - 50); i < volumes.length; i++) {
+    const rvol = volumes[i] / avgVolume20;
+    if (rvol >= 1.5) {
+      volumeSpikes.push(i);
+    }
+  }
+
+  return {
+    avgVolume20,
+    relativeVolume,
+    isHighVolume: relativeVolume >= 1.5,
+    isLowVolume: relativeVolume < 0.6,
+    volumeSpikes,
+  };
+}
+
+/**
+ * Detect compression zones (low volatility + low volume)
+ */
+export function detectCompressionZones(priceData: PriceData[]): CompressionZone[] {
+  if (priceData.length < 20) return [];
+
+  const compressionZones: CompressionZone[] = [];
+  const volumes = priceData.map(d => d.volume);
+
+  // Calculate average volume
+  const avgVolume = calculateSMA(volumes, 20);
+
+  // Calculate average price range for the last 20 periods
+  const ranges: number[] = [];
+  for (let i = 0; i < priceData.length; i++) {
+    ranges.push(priceData[i].high - priceData[i].low);
+  }
+  const avgRange = calculateSMA(ranges, 20);
+
+  // Scan for compression zones
+  let compressionStart = -1;
+
+  for (let i = 20; i < priceData.length; i++) {
+    const currentRange = priceData[i].high - priceData[i].low;
+    const currentVolume = volumes[i];
+
+    // Check if we're in compression
+    const isNarrowRange = currentRange < 0.6 * avgRange;
+    const isLowVolume = currentVolume < 0.6 * avgVolume;
+
+    if (isNarrowRange && isLowVolume) {
+      if (compressionStart === -1) {
+        compressionStart = i;
+      }
+    } else {
+      // End of compression zone
+      if (compressionStart !== -1 && (i - compressionStart) >= 3) {
+        const zoneData = priceData.slice(compressionStart, i);
+        compressionZones.push({
+          startIndex: compressionStart,
+          endIndex: i - 1,
+          highPrice: Math.max(...zoneData.map(d => d.high)),
+          lowPrice: Math.min(...zoneData.map(d => d.low)),
+          avgVolume: zoneData.reduce((sum, d) => sum + d.volume, 0) / zoneData.length,
+        });
+      }
+      compressionStart = -1;
+    }
+  }
+
+  // Check if we ended in compression
+  if (compressionStart !== -1 && (priceData.length - compressionStart) >= 3) {
+    const zoneData = priceData.slice(compressionStart);
+    compressionZones.push({
+      startIndex: compressionStart,
+      endIndex: priceData.length - 1,
+      highPrice: Math.max(...zoneData.map(d => d.high)),
+      lowPrice: Math.min(...zoneData.map(d => d.low)),
+      avgVolume: zoneData.reduce((sum, d) => sum + d.volume, 0) / zoneData.length,
+    });
+  }
+
+  return compressionZones;
+}
+
+/**
+ * Detect breakouts after compression zones
+ */
+export function detectBreakouts(
+  priceData: PriceData[],
+  compressionZones: CompressionZone[]
+): Breakout[] {
+  if (compressionZones.length === 0) return [];
+
+  const breakouts: Breakout[] = [];
+  const volumes = priceData.map(d => d.volume);
+  const avgVolume = calculateSMA(volumes, 20);
+
+  for (const zone of compressionZones) {
+    // Look for breakouts within 5 bars after compression ends
+    const searchEnd = Math.min(zone.endIndex + 5, priceData.length - 1);
+
+    for (let i = zone.endIndex + 1; i <= searchEnd; i++) {
+      const bar = priceData[i];
+      const relativeVolume = bar.volume / avgVolume;
+
+      // Bullish breakout: close above compression high with volume confirmation
+      if (bar.close > zone.highPrice) {
+        breakouts.push({
+          index: i,
+          type: 'bullish',
+          confirmed: relativeVolume >= 1.5,
+          price: bar.close,
+          volume: bar.volume,
+          relativeVolume,
+        });
+        break; // Only count first breakout per zone
+      }
+
+      // Bearish breakout: close below compression low with volume confirmation
+      if (bar.close < zone.lowPrice) {
+        breakouts.push({
+          index: i,
+          type: 'bearish',
+          confirmed: relativeVolume >= 1.5,
+          price: bar.close,
+          volume: bar.volume,
+          relativeVolume,
+        });
+        break;
+      }
+    }
+  }
+
+  return breakouts;
+}
+
+/**
+ * Get complete volume analysis including metrics, compression zones, and breakouts
+ */
+export function getVolumeAnalysis(priceData: PriceData[]) {
+  try {
+    const volumeMetrics = calculateVolumeMetrics(priceData);
+    const compressionZones = detectCompressionZones(priceData);
+    const breakouts = detectBreakouts(priceData, compressionZones);
+
+    return {
+      volumeMetrics,
+      compressionZones,
+      breakouts,
+    };
+  } catch (error) {
+    console.error("Error in volume analysis:", error);
+    return {
+      volumeMetrics: {
+        avgVolume20: 0,
+        relativeVolume: 1,
+        isHighVolume: false,
+        isLowVolume: false,
+        volumeSpikes: [],
+      },
+      compressionZones: [],
+      breakouts: [],
+    };
   }
 }
