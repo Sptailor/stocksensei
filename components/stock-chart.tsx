@@ -80,7 +80,21 @@ export function StockChart({ data, volumeAnalysis }: StockChartProps) {
   const breakouts = volumeAnalysis?.breakouts || [];
 
   // Custom tooltip
-  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{dataKey: string; value: number; color: string}> }) => {
+  const CustomTooltip = ({ active, payload }: {
+    active?: boolean;
+    payload?: Array<{
+      dataKey: string;
+      value: number;
+      color: string;
+      payload: {
+        date: string;
+        price: number;
+        volume: number;
+        volumeColor: string;
+        index: number;
+      };
+    }>
+  }) => {
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
