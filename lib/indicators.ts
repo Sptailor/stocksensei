@@ -298,9 +298,9 @@ export function detectCompressionZones(priceData: PriceData[]): CompressionZone[
     const currentRange = priceData[i].high - priceData[i].low;
     const currentVolume = volumes[i];
 
-    // Check if we're in compression
-    const isNarrowRange = currentRange < 0.6 * avgRange;
-    const isLowVolume = currentVolume < 0.6 * avgVolume;
+    // Check if we're in compression (made more sensitive)
+    const isNarrowRange = currentRange < 0.75 * avgRange; // Increased from 0.6 to 0.75
+    const isLowVolume = currentVolume < 0.8 * avgVolume; // Increased from 0.6 to 0.8
 
     if (isNarrowRange && isLowVolume) {
       if (compressionStart === -1) {
@@ -308,7 +308,7 @@ export function detectCompressionZones(priceData: PriceData[]): CompressionZone[
       }
     } else {
       // End of compression zone
-      if (compressionStart !== -1 && (i - compressionStart) >= 3) {
+      if (compressionStart !== -1 && (i - compressionStart) >= 2) { // Reduced from 3 to 2
         const zoneData = priceData.slice(compressionStart, i);
         compressionZones.push({
           startIndex: compressionStart,
@@ -323,7 +323,7 @@ export function detectCompressionZones(priceData: PriceData[]): CompressionZone[
   }
 
   // Check if we ended in compression
-  if (compressionStart !== -1 && (priceData.length - compressionStart) >= 3) {
+  if (compressionStart !== -1 && (priceData.length - compressionStart) >= 2) { // Reduced from 3 to 2
     const zoneData = priceData.slice(compressionStart);
     compressionZones.push({
       startIndex: compressionStart,
@@ -363,7 +363,7 @@ export function detectBreakouts(
         breakouts.push({
           index: i,
           type: 'bullish',
-          confirmed: relativeVolume >= 1.5,
+          confirmed: relativeVolume >= 1.2, // Reduced from 1.5 to 1.2
           price: bar.close,
           volume: bar.volume,
           relativeVolume,
@@ -376,7 +376,7 @@ export function detectBreakouts(
         breakouts.push({
           index: i,
           type: 'bearish',
-          confirmed: relativeVolume >= 1.5,
+          confirmed: relativeVolume >= 1.2, // Reduced from 1.5 to 1.2
           price: bar.close,
           volume: bar.volume,
           relativeVolume,
