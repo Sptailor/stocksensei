@@ -30,7 +30,7 @@ export function TechnicalIndicatorsCard({ indicators, score }: TechnicalIndicato
         <CardTitle className="flex items-center justify-between text-blue-100">
           <span>Technical Indicators</span>
           <div className="px-3 py-1 bg-blue-500/20 rounded-lg border border-blue-500/30">
-            <span className="text-sm font-mono text-blue-300">{(score * 100).toFixed(1)}%</span>
+            <span className="text-sm font-mono text-blue-300">{score.toFixed(1)}%</span>
           </div>
         </CardTitle>
         <CardDescription className="text-blue-300/60">
