@@ -240,15 +240,14 @@ export function StockChart({ data, volumeAnalysis }: StockChartProps) {
                 dataKey="volume"
                 fill="#6366f1"
                 opacity={0.8}
-                shape={(props: {
-                  fill: string;
-                  x: number;
-                  y: number;
-                  width: number;
-                  height: number;
-                  payload: { volumeColor: string };
-                }) => {
-                  const { fill, x, y, width, height, payload } = props;
+                shape={(props: unknown) => {
+                  const { x, y, width, height, payload } = props as {
+                    x: number;
+                    y: number;
+                    width: number;
+                    height: number;
+                    payload: { volumeColor: string };
+                  };
                   return (
                     <rect
                       x={x}
