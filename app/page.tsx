@@ -102,6 +102,7 @@ export default function Home() {
           technicalScore: stockData?.technicalScore || 0.5,
           sentimentScore: sentimentData?.sentimentScore || 0,
           experienceScore: experienceData?.experienceScore || 0.5,
+          volumeAnalysis: stockData?.volumeAnalysis,
         }),
       });
       if (!res.ok) throw new Error("Failed to create prediction");

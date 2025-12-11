@@ -7,7 +7,7 @@ import { desc, eq } from "drizzle-orm";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { symbol, technicalScore, sentimentScore, experienceScore } = body;
+    const { symbol, technicalScore, sentimentScore, experienceScore, volumeAnalysis } = body;
 
     if (!symbol) {
       return NextResponse.json({ error: "Symbol required" }, { status: 400 });
@@ -29,10 +29,73 @@ export async function POST(request: NextRequest) {
     // Sentiment score from -1..1 to 0..1
     const normalizedSentiment = normalizeSentiment(sentimentScore);
 
-    // Calculate final score using the formula:
-    // finalScore = (0.4 * technical) + (0.4 * sentiment) + (0.2 * experience)
-    const finalScore =
+    // Analyze volume patterns for additional signals
+    let volumeSignal = 0;
+    let compressionStatus = "none";
+    let breakoutStatus = "none";
+    const insights: string[] = [];
+
+    if (volumeAnalysis) {
+      const { volumeMetrics, compressionZones, breakouts } = volumeAnalysis;
+
+      // Check if currently in compression
+      const inCompression = compressionZones.some(
+        (zone: { endIndex: number }) => zone.endIndex >= volumeAnalysis.compressionZones.length - 5
+      );
+
+      if (inCompression) {
+        compressionStatus = "active";
+        insights.push("⚠️ Stock is currently in a compression zone - potential breakout setup");
+        volumeSignal -= 0.05; // Slightly bearish when compressed
+      }
+
+      // Check for recent breakouts
+      const recentBreakout = breakouts.find(
+        (b: { index: number }) => b.index >= breakouts.length - 10
+      );
+
+      if (recentBreakout) {
+        breakoutStatus = recentBreakout.type;
+        if (recentBreakout.confirmed) {
+          if (recentBreakout.type === "bullish") {
+            insights.push("🚀 Confirmed bullish breakout detected with strong volume");
+            volumeSignal += 0.15; // Strong bullish signal
+          } else {
+            insights.push("📉 Confirmed bearish breakout detected with strong volume");
+            volumeSignal -= 0.15; // Strong bearish signal
+          }
+        } else {
+          if (recentBreakout.type === "bullish") {
+            insights.push("⚡ Bullish breakout detected but lacks volume confirmation");
+            volumeSignal += 0.05; // Weak bullish signal
+          } else {
+            insights.push("⚡ Bearish breakout detected but lacks volume confirmation");
+            volumeSignal -= 0.05; // Weak bearish signal
+          }
+        }
+      }
+
+      // Volume trend analysis
+      if (volumeMetrics.isHighVolume) {
+        insights.push("📊 High relative volume - increased institutional interest");
+        volumeSignal += 0.05;
+      } else if (volumeMetrics.isLowVolume) {
+        insights.push("📊 Low volume - reduced trading activity, caution advised");
+        volumeSignal -= 0.03;
+      }
+
+      // Volume spikes
+      if (volumeMetrics.volumeSpikes.length > 3) {
+        insights.push(`🔥 ${volumeMetrics.volumeSpikes.length} volume spikes detected - increased volatility`);
+      }
+    }
+
+    // Calculate final score using the formula with volume adjustment:
+    // finalScore = (0.4 * technical) + (0.4 * sentiment) + (0.2 * experience) + volumeSignal
+    const baseScore =
       0.4 * normalizedTechnical + 0.4 * normalizedSentiment + 0.2 * experienceScore;
+
+    const finalScore = baseScore + volumeSignal;
 
     // Clamp to 0-1 range
     const clampedScore = Math.max(0, Math.min(1, finalScore));
@@ -46,6 +109,7 @@ export async function POST(request: NextRequest) {
         technical: 0.4,
         sentiment: 0.4,
         experience: 0.2,
+        volumeAdjustment: volumeSignal,
       },
       rawScores: {
         technical: technicalScore,
@@ -58,6 +122,13 @@ export async function POST(request: NextRequest) {
         technicalContribution: 0.4 * normalizedTechnical,
         sentimentContribution: 0.4 * normalizedSentiment,
         experienceContribution: 0.2 * experienceScore,
+        volumeContribution: volumeSignal,
+        baseScore: baseScore,
+      },
+      volumeAnalysis: {
+        compressionStatus,
+        breakoutStatus,
+        insights,
       },
     };
 

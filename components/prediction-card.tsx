@@ -11,6 +11,13 @@ interface PredictionCardProps {
     technicalScore: number;
     sentimentScore: number;
     experienceScore: number;
+    details?: {
+      volumeAnalysis?: {
+        compressionStatus: string;
+        breakoutStatus: string;
+        insights: string[];
+      };
+    };
   };
 }
 
@@ -111,6 +118,39 @@ export function PredictionCard({ prediction }: PredictionCardProps) {
               </div>
             </div>
           </div>
+
+          {/* Volume Analysis Insights */}
+          {prediction.details?.volumeAnalysis && prediction.details.volumeAnalysis.insights.length > 0 && (
+            <div className="mt-6 p-4 rounded-lg bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/30">
+              <div className="flex items-center justify-between mb-3">
+                <div className="text-sm font-semibold text-yellow-200">Volume Pattern Analysis</div>
+                <div className="flex gap-2 flex-wrap justify-end">
+                  {prediction.details.volumeAnalysis.compressionStatus === 'active' && (
+                    <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 border text-xs">
+                      ⚠️ In Compression
+                    </Badge>
+                  )}
+                  {prediction.details.volumeAnalysis.breakoutStatus !== 'none' && (
+                    <Badge className={`${
+                      prediction.details.volumeAnalysis.breakoutStatus === 'bullish'
+                        ? 'bg-green-500/20 text-green-400 border-green-500/30'
+                        : 'bg-red-500/20 text-red-400 border-red-500/30'
+                    } border text-xs`}>
+                      {prediction.details.volumeAnalysis.breakoutStatus === 'bullish' ? '🚀' : '📉'} {prediction.details.volumeAnalysis.breakoutStatus} Breakout
+                    </Badge>
+                  )}
+                </div>
+              </div>
+              <div className="space-y-2">
+                {prediction.details.volumeAnalysis.insights.map((insight, idx) => (
+                  <div key={idx} className="text-sm text-yellow-100/90 flex items-start gap-2">
+                    <span className="text-yellow-400 mt-0.5">•</span>
+                    <span>{insight}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

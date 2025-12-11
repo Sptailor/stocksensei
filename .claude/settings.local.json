@@ -9,7 +9,8 @@
       "Bash(npm install:*)",
       "Bash(cat:*)",
       "Bash(curl:*)",
-      "Bash(npm i:*)"
+      "Bash(npm i:*)",
+      "Bash(open http://localhost:3002)"
     ],
     "deny": [],
     "ask": []
