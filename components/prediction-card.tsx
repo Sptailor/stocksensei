@@ -81,7 +81,7 @@ export function PredictionCard({ prediction }: PredictionCardProps) {
 
             <div className="p-3 rounded-lg bg-blue-500/5 border border-blue-500/20">
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-blue-300/80 font-mono">Technical Analysis (40%)</span>
+                <span className="text-blue-300/80 font-mono">Technical Analysis (50%)</span>
                 <span className="font-bold text-blue-100">{prediction.technicalScore.toFixed(1)}%</span>
               </div>
               <div className="w-full bg-slate-800/50 rounded-full h-2.5">
@@ -94,7 +94,7 @@ export function PredictionCard({ prediction }: PredictionCardProps) {
 
             <div className="p-3 rounded-lg bg-purple-500/5 border border-purple-500/20">
               <div className="flex justify-between text-sm mb-2">
-                <span className="text-purple-300/80 font-mono">News Sentiment (40%)</span>
+                <span className="text-purple-300/80 font-mono">AI News Sentiment (50%)</span>
                 <span className="font-bold text-purple-100">{(prediction.sentimentScore * 100).toFixed(1)}%</span>
               </div>
               <div className="w-full bg-slate-800/50 rounded-full h-2.5">
@@ -105,18 +105,6 @@ export function PredictionCard({ prediction }: PredictionCardProps) {
               </div>
             </div>
 
-            <div className="p-3 rounded-lg bg-orange-500/5 border border-orange-500/20">
-              <div className="flex justify-between text-sm mb-2">
-                <span className="text-orange-300/80 font-mono">User Experience (20%)</span>
-                <span className="font-bold text-orange-100">{(prediction.experienceScore * 100).toFixed(1)}%</span>
-              </div>
-              <div className="w-full bg-slate-800/50 rounded-full h-2.5">
-                <div
-                  className="bg-gradient-to-r from-orange-500 to-yellow-500 h-2.5 rounded-full transition-all shadow-lg shadow-orange-500/50"
-                  style={{ width: `${prediction.experienceScore * 100}%` }}
-                />
-              </div>
-            </div>
           </div>
 
           {/* Volume Analysis Insights */}

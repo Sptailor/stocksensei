@@ -7,7 +7,6 @@ import { StockQuoteCard } from "@/components/stock-quote-card";
 import { StockChart } from "@/components/stock-chart";
 import { TechnicalIndicatorsCard } from "@/components/technical-indicators-card";
 import { SentimentCard } from "@/components/sentiment-card";
-import { UserExperienceInput } from "@/components/user-experience-input";
 import { PredictionCard } from "@/components/prediction-card";
 import { PredictionHistory } from "@/components/prediction-history";
 import { Button } from "@/components/ui/button";
@@ -24,11 +23,6 @@ interface SentimentData {
   articlesAnalyzed?: number;
 }
 
-interface ExperienceData {
-  experienceScore: number;
-  explanation: string;
-}
-
 interface PredictionData {
   finalScore: number;
   label: string;
@@ -40,7 +34,6 @@ interface PredictionData {
 export default function Home() {
   const [selectedStock, setSelectedStock] = useState<string | null>(null);
   const [sentimentData, setSentimentData] = useState<SentimentData | null>(null);
-  const [experienceData, setExperienceData] = useState<ExperienceData | null>(null);
   const [prediction, setPrediction] = useState<PredictionData | null>(null);
 
   // Fetch stock data
@@ -71,26 +64,6 @@ export default function Home() {
     },
   });
 
-  // Analyze user experience
-  const experienceMutation = useMutation({
-    mutationFn: async (userNote: string) => {
-      const res = await fetch("/api/sentiment", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          symbol: selectedStock,
-          type: "experience",
-          userNote,
-        }),
-      });
-      if (!res.ok) throw new Error("Failed to analyze experience");
-      return res.json();
-    },
-    onSuccess: (data) => {
-      setExperienceData(data);
-    },
-  });
-
   // Create prediction
   const predictionMutation = useMutation({
     mutationFn: async () => {
@@ -101,7 +74,7 @@ export default function Home() {
           symbol: selectedStock,
           technicalScore: stockData?.technicalScore || 0.5,
           sentimentScore: sentimentData?.sentimentScore || 0,
-          experienceScore: experienceData?.experienceScore || 0.5,
+          experienceScore: 0.5, // Neutral default - not using user input
           volumeAnalysis: stockData?.volumeAnalysis,
         }),
       });
@@ -127,7 +100,6 @@ export default function Home() {
   const handleSelectStock = (symbol: string) => {
     setSelectedStock(symbol);
     setSentimentData(null);
-    setExperienceData(null);
     setPrediction(null);
   };
 
@@ -139,12 +111,7 @@ export default function Home() {
       sentimentMutation.mutate();
     }
 
-    // Use default experience score if user hasn't provided input
-    if (!experienceData) {
-      setExperienceData({ experienceScore: 0.5, explanation: "Default neutral score" });
-    }
-
-    // Small delay to ensure state is updated
+    // Small delay to ensure sentiment state is updated
     setTimeout(() => {
       predictionMutation.mutate();
     }, 100);
@@ -215,11 +182,6 @@ export default function Home() {
                   articlesAnalyzed={sentimentData.articlesAnalyzed}
                 />
               )}
-
-              <UserExperienceInput
-                onSubmit={(note) => experienceMutation.mutate(note)}
-                isLoading={experienceMutation.isPending}
-              />
 
               {/* Generate Prediction Button */}
               {!prediction && (

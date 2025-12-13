@@ -91,9 +91,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Calculate final score using the formula with volume adjustment:
-    // finalScore = (0.4 * technical) + (0.4 * sentiment) + (0.2 * experience) + volumeSignal
+    // finalScore = (0.5 * technical) + (0.5 * sentiment) + volumeSignal
+    // Note: experienceScore is kept at neutral 0.5 but not weighted in calculation
     const baseScore =
-      0.4 * normalizedTechnical + 0.4 * normalizedSentiment + 0.2 * experienceScore;
+      0.5 * normalizedTechnical + 0.5 * normalizedSentiment;
 
     const finalScore = baseScore + volumeSignal;
 
@@ -106,9 +107,8 @@ export async function POST(request: NextRequest) {
     // Prepare details
     const details = {
       weights: {
-        technical: 0.4,
-        sentiment: 0.4,
-        experience: 0.2,
+        technical: 0.5,
+        sentiment: 0.5,
         volumeAdjustment: volumeSignal,
       },
       rawScores: {
@@ -116,12 +116,10 @@ export async function POST(request: NextRequest) {
         technicalNormalized: normalizedTechnical,
         sentiment: sentimentScore,
         sentimentNormalized: normalizedSentiment,
-        experience: experienceScore,
       },
       calculation: {
-        technicalContribution: 0.4 * normalizedTechnical,
-        sentimentContribution: 0.4 * normalizedSentiment,
-        experienceContribution: 0.2 * experienceScore,
+        technicalContribution: 0.5 * normalizedTechnical,
+        sentimentContribution: 0.5 * normalizedSentiment,
         volumeContribution: volumeSignal,
         baseScore: baseScore,
       },
