@@ -8,6 +8,7 @@ AI-powered stock analysis platform combining technical indicators, news sentimen
 
 - 🔍 Real-time stock quotes and historical data
 - 📊 Technical analysis (SMA, EMA, RSI)
+- 📉 Compression and breakout detection
 - 🤖 AI-powered news sentiment analysis
 - 🎯 Intelligent predictions based on multiple factors
 - 📜 Prediction history tracking
@@ -60,8 +61,8 @@ stock-sensei/
 
 1. Enter a stock symbol (e.g., AAPL, TSLA, MSFT)
 2. View real-time data and technical indicators
-3. AI analyzes news sentiment automatically
-4. Add your own insights (optional)
+3. Identify compression patterns and potential breakouts
+4. AI analyzes news sentiment automatically
 5. Generate AI-powered prediction
 6. Track prediction history
 
