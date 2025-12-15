@@ -213,7 +213,10 @@ export default function Home() {
             <div className="space-y-6">
               {prediction && <PredictionCard prediction={prediction} />}
 
-              <PredictionHistory predictions={historyQuery.data?.predictions || []} />
+              <PredictionHistory
+                predictions={historyQuery.data?.predictions || []}
+                onSelectStock={handleSelectStock}
+              />
             </div>
           </div>
         )}

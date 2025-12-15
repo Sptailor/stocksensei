@@ -10,7 +10,11 @@
       "Bash(cat:*)",
       "Bash(curl:*)",
       "Bash(npm i:*)",
-      "Bash(open http://localhost:3002)"
+      "Bash(open http://localhost:3002)",
+      "Bash(node --version:*)",
+      "Bash(brew list:*)",
+      "Bash(brew --prefix:*)",
+      "Bash(open http://localhost:3003)"
     ],
     "deny": [],
     "ask": []

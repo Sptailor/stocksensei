@@ -12,9 +12,10 @@ interface PredictionHistoryProps {
     label: string;
     createdAt: Date;
   }>;
+  onSelectStock: (symbol: string) => void;
 }
 
-export function PredictionHistory({ predictions }: PredictionHistoryProps) {
+export function PredictionHistory({ predictions, onSelectStock }: PredictionHistoryProps) {
   const getBadgeVariant = (label: string) => {
     switch (label) {
       case "Bullish":
@@ -53,6 +54,7 @@ export function PredictionHistory({ predictions }: PredictionHistoryProps) {
             {predictions.map((prediction) => (
               <div
                 key={prediction.id}
+                onClick={() => onSelectStock(prediction.stockSymbol)}
                 className="flex items-center justify-between p-3 rounded-lg border border-blue-500/20 bg-gradient-to-r from-blue-500/5 to-transparent hover:from-blue-500/10 hover:border-blue-500/30 transition-all cursor-pointer group"
               >
                 <div className="flex-1">
