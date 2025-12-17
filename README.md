@@ -14,6 +14,64 @@ AI-powered stock analysis platform combining technical indicators, news sentimen
 - 📜 Prediction history tracking
 - 🎨 Modern, futuristic UI
 
+## How the Prediction Algorithm Works
+
+StockSensei uses a multi-factor approach to generate stock predictions by combining technical analysis, AI-powered sentiment analysis, and volume pattern recognition.
+
+### Three Core Components
+
+**1. Technical Score (50% weight)**
+- Calculated from multiple technical indicators: SMA (Simple Moving Average), EMA (Exponential Moving Average), and RSI (Relative Strength Index)
+- Each indicator is scored and weighted to produce a technical score from 0-100
+- Normalized to 0-1 range for the final calculation
+- Identifies trend strength, momentum, and overbought/oversold conditions
+
+**2. AI Sentiment Score (50% weight)**
+- Claude AI analyzes recent news articles about the stock
+- Produces a sentiment score ranging from -1 (very negative) to +1 (very positive)
+- Normalized to 0-1 range for the final calculation
+- Considers market sentiment, news tone, and headline analysis
+
+**3. Volume Analysis (Dynamic adjustment)**
+- Adds or subtracts up to ±0.15 from the final score based on volume patterns
+- **Compression Zones**: Detects periods of price consolidation with declining volume (-0.05 adjustment)
+  - Indicates potential breakout setup but adds caution until breakout occurs
+- **Confirmed Breakouts**: Identifies price movements with strong volume confirmation
+  - Bullish breakout: +0.15 adjustment
+  - Bearish breakout: -0.15 adjustment
+- **Unconfirmed Breakouts**: Price movements without volume confirmation (±0.05)
+- **Volume Trends**: High relative volume (+0.05) or low volume (-0.03) adjustments
+
+### The Formula
+
+```
+Base Score = (0.5 × Technical Score) + (0.5 × Sentiment Score)
+Final Score = Base Score + Volume Signal Adjustment
+Final Score = Clamped to range [0, 1]
+```
+
+### Prediction Labels
+
+The final score is converted to a prediction label:
+- **Bullish** (score ≥ 0.6): Positive outlook, upward momentum expected
+- **Neutral** (0.4 ≤ score < 0.6): Mixed signals, uncertain direction
+- **Bearish** (score < 0.4): Negative outlook, downward pressure expected
+
+### Example Calculation
+
+For AAPL with:
+- Technical Score: 72/100 → normalized to 0.72
+- Sentiment Score: +0.4 → normalized to 0.70
+- Volume Signal: Confirmed bullish breakout → +0.15
+
+```
+Base Score = (0.5 × 0.72) + (0.5 × 0.70) = 0.71
+Final Score = 0.71 + 0.15 = 0.86
+Label = "Bullish" (since 0.86 ≥ 0.6)
+```
+
+This multi-factor approach ensures predictions consider both quantitative technical data and qualitative market sentiment, adjusted by real-time volume patterns that often precede significant price movements.
+
 ## Tech Stack
 
 - **Next.js 15** + TypeScript
