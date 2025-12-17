@@ -171,7 +171,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-semibold text-red-100 mb-2 text-center">Stock Symbol Not Found</h3>
               <p className="text-red-300/70 text-center mb-4">
-                Unable to find stock data for "{selectedStock}". Please check the symbol and try again.
+                Unable to find stock data for &quot;{selectedStock}&quot;. Please check the symbol and try again.
               </p>
               <p className="text-red-400/50 text-sm text-center font-mono mb-6">
                 {stockError instanceof Error ? stockError.message : "Failed to fetch stock data"}

@@ -9,13 +9,12 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   ReferenceArea,
   ReferenceDot,
 } from "recharts";
 import { format } from "date-fns";
-import { TrendingUp, TrendingDown, AlertTriangle } from "lucide-react";
+import { TrendingUp, AlertTriangle } from "lucide-react";
 
 interface CompressionZone {
   startIndex: number;
