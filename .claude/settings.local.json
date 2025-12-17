@@ -15,7 +15,8 @@
       "Bash(brew list:*)",
       "Bash(brew --prefix:*)",
       "Bash(open http://localhost:3003)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npx tsc:*)"
     ],
     "deny": [],
     "ask": []
