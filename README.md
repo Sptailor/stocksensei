@@ -72,6 +72,76 @@ Label = "Bullish" (since 0.86 ≥ 0.6)
 
 This multi-factor approach ensures predictions consider both quantitative technical data and qualitative market sentiment, adjusted by real-time volume patterns that often precede significant price movements.
 
+## Technical Indicators Explained
+
+StockSensei analyzes stocks using several proven technical indicators to generate the technical score component of predictions.
+
+### Moving Averages
+
+**Simple Moving Average (SMA)**
+- Calculates the average closing price over a specific period
+- **SMA-20**: 20-day average, tracks short-term price trends
+- **SMA-50**: 50-day average, identifies medium-term trends
+- **Signal**: When SMA-20 crosses above SMA-50 (bullish) or below (bearish), it indicates trend direction changes
+
+**Exponential Moving Average (EMA)**
+- Similar to SMA but gives more weight to recent prices, making it more responsive
+- **EMA-12**: 12-day exponential average for short-term momentum
+- **EMA-26**: 26-day exponential average for medium-term momentum
+- **Signal**: EMA-12 above EMA-26 suggests bullish momentum, below suggests bearish momentum
+
+### Relative Strength Index (RSI)
+
+- Measures the speed and magnitude of price changes on a scale of 0-100
+- **Oversold (RSI < 30)**: Stock may be undervalued, potential buying opportunity (bullish signal)
+- **Neutral (30 ≤ RSI ≤ 70)**: Stock is trading normally without extreme conditions
+- **Overbought (RSI > 70)**: Stock may be overvalued, potential selling opportunity (bearish signal)
+- RSI helps identify when a stock has moved too far in one direction and may reverse
+
+### Volume Pattern Analysis
+
+**Compression Zones**
+- Periods where price consolidates in a narrow range with declining volume
+- Indicates market indecision and often precedes significant price movements
+- Detection criteria:
+  - Price range narrower than 75% of average range
+  - Volume below 80% of 20-day average
+  - Must persist for at least 2 bars
+
+**Breakouts**
+- Occur when price breaks out of a compression zone
+- **Bullish Breakout**: Price closes above compression high
+- **Bearish Breakout**: Price closes below compression low
+- **Volume Confirmation**: Relative volume ≥ 1.2x indicates institutional participation
+- Confirmed breakouts are stronger signals than unconfirmed ones
+
+**Volume Metrics**
+- **Average Volume (20-day)**: Baseline for comparing current volume
+- **Relative Volume (RVOL)**: Current volume divided by average volume
+  - RVOL ≥ 1.5: High volume spike, increased interest
+  - RVOL < 0.6: Low volume, reduced participation
+- **Volume Spikes**: Days with RVOL ≥ 1.5, often signal important price action
+
+### How Indicators Combine Into Technical Score
+
+Each indicator generates a signal: +1 (bullish), 0 (neutral), or -1 (bearish)
+
+1. **SMA Signal**: Compares SMA-20 to SMA-50
+2. **EMA Signal**: Compares EMA-12 to EMA-26
+3. **RSI Signal**: Checks if oversold, neutral, or overbought
+
+The raw score is the sum of all signals (-3 to +3), then normalized:
+```
+Technical Score = ((Raw Score + 3) / 6) × 100
+```
+
+Example:
+- SMA-20 > SMA-50: +1 (bullish)
+- EMA-12 > EMA-26: +1 (bullish)
+- RSI = 45: 0 (neutral)
+- Raw Score = 2
+- Technical Score = ((2 + 3) / 6) × 100 = 83.33
+
 ## Tech Stack
 
 - **Next.js 15** + TypeScript
