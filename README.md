@@ -66,16 +66,6 @@ stock-sensei/
 5. Generate AI-powered prediction
 6. Track prediction history
 
-## Deployment
-
-Deploy to Vercel:
-
-```bash
-git push
-```
-
-Add environment variables in Vercel dashboard and deploy.
-
 ## Disclaimer
 
 ⚠️ **Educational purposes only.** Not financial advice. Always do your own research before making investment decisions.
