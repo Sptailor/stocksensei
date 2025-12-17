@@ -173,9 +173,20 @@ export default function Home() {
               <p className="text-red-300/70 text-center mb-4">
                 Unable to find stock data for "{selectedStock}". Please check the symbol and try again.
               </p>
-              <p className="text-red-400/50 text-sm text-center font-mono">
+              <p className="text-red-400/50 text-sm text-center font-mono mb-6">
                 {stockError instanceof Error ? stockError.message : "Failed to fetch stock data"}
               </p>
+              <div className="border-t border-red-500/20 pt-6">
+                <p className="text-blue-300/70 text-sm text-center mb-3">Try these popular stocks:</p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  <button onClick={() => handleSelectStock('AAPL')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">AAPL</button>
+                  <button onClick={() => handleSelectStock('TSLA')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">TSLA</button>
+                  <button onClick={() => handleSelectStock('GOOGL')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">GOOGL</button>
+                  <button onClick={() => handleSelectStock('MSFT')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">MSFT</button>
+                  <button onClick={() => handleSelectStock('AMZN')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">AMZN</button>
+                  <button onClick={() => handleSelectStock('NVDA')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">NVDA</button>
+                </div>
+              </div>
             </div>
           </div>
         )}
