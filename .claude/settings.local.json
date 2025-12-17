@@ -14,7 +14,8 @@
       "Bash(node --version:*)",
       "Bash(brew list:*)",
       "Bash(brew --prefix:*)",
-      "Bash(open http://localhost:3003)"
+      "Bash(open http://localhost:3003)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []

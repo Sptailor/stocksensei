@@ -37,15 +37,19 @@ export default function Home() {
   const [prediction, setPrediction] = useState<PredictionData | null>(null);
 
   // Fetch stock data
-  const { data: stockData, isLoading: isLoadingStock } = useQuery({
+  const { data: stockData, isLoading: isLoadingStock, isError: isStockError, error: stockError } = useQuery({
     queryKey: ["stock", selectedStock],
     queryFn: async () => {
       if (!selectedStock) return null;
       const res = await fetch(`/api/stock?symbol=${selectedStock}`);
-      if (!res.ok) throw new Error("Failed to fetch stock data");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to fetch stock data");
+      }
       return res.json();
     },
     enabled: !!selectedStock,
+    retry: false,
   });
 
   // Fetch sentiment
@@ -154,8 +158,30 @@ export default function Home() {
           </div>
         )}
 
+        {/* Error State */}
+        {isStockError && !isLoadingStock && (
+          <div className="flex flex-col items-center justify-center py-12">
+            <div className="glass-card max-w-2xl mx-auto p-8 rounded-2xl border border-red-500/30 bg-red-500/5">
+              <div className="flex items-center justify-center mb-4">
+                <div className="w-16 h-16 rounded-full bg-red-500/20 flex items-center justify-center">
+                  <svg className="w-8 h-8 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </div>
+              <h3 className="text-xl font-semibold text-red-100 mb-2 text-center">Stock Symbol Not Found</h3>
+              <p className="text-red-300/70 text-center mb-4">
+                Unable to find stock data for "{selectedStock}". Please check the symbol and try again.
+              </p>
+              <p className="text-red-400/50 text-sm text-center font-mono">
+                {stockError instanceof Error ? stockError.message : "Failed to fetch stock data"}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Main Content */}
-        {stockData && !isLoadingStock && (
+        {stockData && !isLoadingStock && !isStockError && (
           <div className="grid gap-6 lg:grid-cols-3">
             {/* Left Column */}
             <div className="lg:col-span-2 space-y-6">
