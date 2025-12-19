@@ -83,6 +83,20 @@ const CATEGORIZED_STOCKS = {
     { symbol: "ENB.TO", name: "Enbridge" },
     { symbol: "CNQ.TO", name: "Canadian Natural Resources" },
   ],
+  "Cryptocurrency": [
+    { symbol: "BTC-USD", name: "Bitcoin" },
+    { symbol: "ETH-USD", name: "Ethereum" },
+    { symbol: "BNB-USD", name: "Binance Coin" },
+    { symbol: "XRP-USD", name: "Ripple" },
+    { symbol: "ADA-USD", name: "Cardano" },
+    { symbol: "DOGE-USD", name: "Dogecoin" },
+    { symbol: "SOL-USD", name: "Solana" },
+    { symbol: "MATIC-USD", name: "Polygon" },
+    { symbol: "DOT-USD", name: "Polkadot" },
+    { symbol: "AVAX-USD", name: "Avalanche" },
+    { symbol: "LINK-USD", name: "Chainlink" },
+    { symbol: "UNI-USD", name: "Uniswap" },
+  ],
 };
 
 const POPULAR_STOCKS = Object.values(CATEGORIZED_STOCKS).flat();
@@ -151,7 +165,7 @@ export function StockSearch({ onSelectStock }: StockSearchProps) {
           <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-blue-400 z-10" />
           <Input
             type="text"
-            placeholder="Enter stock symbol (e.g., AAPL, TSLA)..."
+            placeholder="Enter stock or crypto symbol (e.g., AAPL, BTC-USD)..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onFocus={() => search.trim() && setShowSuggestions(true)}

@@ -1,15 +1,16 @@
 # StockSensei 📈
 
-AI-powered stock analysis platform combining technical indicators, news sentiment, and user insights.
+AI-powered stock and cryptocurrency analysis platform combining technical indicators, news sentiment, and user insights.
 
 🔗 **Live Demo:** [https://stocksensei-five.vercel.app/](https://stocksensei-five.vercel.app/)
 
 ## Features
 
-- 🔍 Real-time stock quotes and historical data
+- 🔍 Real-time stock & crypto quotes and historical data
+- 💰 **Cryptocurrency Support**: Analyze Bitcoin, Ethereum, Solana, and 10+ other cryptos
 - 📊 Technical analysis (SMA, EMA, RSI)
 - 📉 Compression and breakout detection
-- 🤖 AI-powered news sentiment analysis
+- 🤖 AI-powered news sentiment analysis (Claude Sonnet 3.5)
 - 🎯 Intelligent predictions based on multiple factors
 - 📜 Prediction history tracking
 - 🎨 Modern, futuristic UI
@@ -198,12 +199,18 @@ stock-sensei/
 
 ## Usage
 
-1. Enter a stock symbol (e.g., AAPL, TSLA, MSFT)
+1. Enter a stock or crypto symbol
+   - **Stocks**: AAPL, TSLA, NVDA, GOOGL, etc.
+   - **Crypto**: BTC-USD, ETH-USD, SOL-USD, etc.
 2. View real-time data and technical indicators
 3. Identify compression patterns and potential breakouts
-4. AI analyzes news sentiment automatically
+4. AI analyzes news sentiment automatically (Claude Sonnet 3.5)
 5. Generate AI-powered prediction
 6. Track prediction history
+
+### Supported Cryptocurrencies
+
+Bitcoin (BTC-USD), Ethereum (ETH-USD), Binance Coin (BNB-USD), Ripple (XRP-USD), Cardano (ADA-USD), Dogecoin (DOGE-USD), Solana (SOL-USD), Polygon (MATIC-USD), Polkadot (DOT-USD), Avalanche (AVAX-USD), Chainlink (LINK-USD), Uniswap (UNI-USD), and many more using the Yahoo Finance ticker format.
 
 ## Disclaimer
 

@@ -136,7 +136,7 @@ export default function Home() {
             StockSensei
           </h1>
           <p className="text-lg text-blue-200/80">
-            AI-Powered Stock Analysis & Prediction Platform
+            AI-Powered Stock & Crypto Analysis Platform
           </p>
           <div className="mt-2 flex items-center justify-center gap-2">
             <div className="h-1 w-1 rounded-full bg-blue-500 animate-pulse"></div>
@@ -177,14 +177,14 @@ export default function Home() {
                 {stockError instanceof Error ? stockError.message : "Failed to fetch stock data"}
               </p>
               <div className="border-t border-red-500/20 pt-6">
-                <p className="text-blue-300/70 text-sm text-center mb-3">Try these popular stocks:</p>
+                <p className="text-blue-300/70 text-sm text-center mb-3">Try these popular options:</p>
                 <div className="flex flex-wrap gap-2 justify-center">
                   <button onClick={() => handleSelectStock('AAPL')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">AAPL</button>
                   <button onClick={() => handleSelectStock('TSLA')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">TSLA</button>
-                  <button onClick={() => handleSelectStock('GOOGL')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">GOOGL</button>
-                  <button onClick={() => handleSelectStock('MSFT')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">MSFT</button>
-                  <button onClick={() => handleSelectStock('AMZN')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">AMZN</button>
                   <button onClick={() => handleSelectStock('NVDA')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">NVDA</button>
+                  <button onClick={() => handleSelectStock('BTC-USD')} className="px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-300 text-sm transition-all">BTC-USD</button>
+                  <button onClick={() => handleSelectStock('ETH-USD')} className="px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-300 text-sm transition-all">ETH-USD</button>
+                  <button onClick={() => handleSelectStock('SOL-USD')} className="px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-300 text-sm transition-all">SOL-USD</button>
                 </div>
               </div>
             </div>
@@ -271,13 +271,14 @@ export default function Home() {
               </div>
               <h3 className="text-2xl font-semibold text-blue-100 mb-3">Ready to Analyze</h3>
               <p className="text-blue-300/70 mb-6">
-                Enter a stock symbol above to unlock AI-powered market intelligence
+                Enter a stock or crypto symbol above to unlock AI-powered market intelligence
               </p>
               <div className="flex flex-wrap gap-2 justify-center">
                 <button onClick={() => handleSelectStock('AAPL')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">AAPL</button>
                 <button onClick={() => handleSelectStock('TSLA')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">TSLA</button>
-                <button onClick={() => handleSelectStock('GOOGL')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">GOOGL</button>
-                <button onClick={() => handleSelectStock('MSFT')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">MSFT</button>
+                <button onClick={() => handleSelectStock('NVDA')} className="px-4 py-2 bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/30 rounded-lg text-blue-300 text-sm transition-all">NVDA</button>
+                <button onClick={() => handleSelectStock('BTC-USD')} className="px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-300 text-sm transition-all">BTC-USD</button>
+                <button onClick={() => handleSelectStock('ETH-USD')} className="px-4 py-2 bg-purple-500/10 hover:bg-purple-500/20 border border-purple-500/30 rounded-lg text-purple-300 text-sm transition-all">ETH-USD</button>
               </div>
             </div>
           </div>
