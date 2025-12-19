@@ -1,6 +1,12 @@
 import Sentiment from "sentiment";
+import Anthropic from "@anthropic-ai/sdk";
 
 const sentiment = new Sentiment();
+
+// Initialize Anthropic client
+const anthropic = new Anthropic({
+  apiKey: process.env.ANTHROPIC_API_KEY,
+});
 
 // ============================================================================
 // TYPES
@@ -323,6 +329,87 @@ function calculateSentimentConsistency(articleBreakdown: ArticleSentimentBreakdo
   return 0.5 + (alignment - 0.33) * 0.5; // 0.5 to 0.7
 }
 
+/**
+ * Use Claude AI to analyze sentiment of news articles
+ * Returns more nuanced, context-aware sentiment analysis
+ */
+async function analyzeWithClaude(articles: NewsArticle[]): Promise<{
+  score: number;
+  positive: string[];
+  negative: string[];
+  reasoning: string;
+}> {
+  try {
+    // Prepare article summaries for Claude
+    const articleSummaries = articles.slice(0, 15).map((article, idx) => {
+      const ageInHours = Math.floor(
+        (new Date().getTime() - new Date(article.publishedAt).getTime()) / (1000 * 60 * 60)
+      );
+      return `${idx + 1}. [${ageInHours}h ago] ${article.title}${article.description ? ` - ${article.description}` : ""}`;
+    }).join("\n");
+
+    const prompt = `You are a financial sentiment analyst. Analyze these recent news headlines about a stock and provide:
+1. A sentiment score from -1.0 (extremely bearish) to +1.0 (extremely bullish)
+2. Key positive indicators (specific terms/phrases that suggest positive outlook)
+3. Key negative indicators (specific terms/phrases that suggest negative outlook)
+4. Brief reasoning for your assessment
+
+News articles (newer articles listed first):
+${articleSummaries}
+
+Respond in JSON format:
+{
+  "score": <number between -1.0 and 1.0>,
+  "positiveIndicators": [<array of specific positive terms/phrases found>],
+  "negativeIndicators": [<array of specific negative terms/phrases found>],
+  "reasoning": "<brief 2-3 sentence explanation>"
+}
+
+Consider:
+- Specific financial metrics mentioned (earnings beats/misses, revenue growth, etc.)
+- Analyst actions (upgrades, downgrades, price target changes)
+- Product launches, regulatory approvals/issues
+- Leadership changes
+- Market position and competitive developments
+- Recent news should carry more weight than older news
+- Look for context - a "drop" might be positive if it's smaller than expected`;
+
+    const response = await anthropic.messages.create({
+      model: "claude-3-5-sonnet-20241022",
+      max_tokens: 1024,
+      messages: [{
+        role: "user",
+        content: prompt,
+      }],
+    });
+
+    // Parse Claude's response
+    const content = response.content[0];
+    if (content.type !== "text") {
+      throw new Error("Unexpected response type from Claude");
+    }
+
+    const result = JSON.parse(content.text);
+
+    return {
+      score: Math.max(-1, Math.min(1, result.score || 0)),
+      positive: result.positiveIndicators || [],
+      negative: result.negativeIndicators || [],
+      reasoning: result.reasoning || "",
+    };
+  } catch (error) {
+    console.error("Claude AI analysis failed, falling back to basic sentiment:", error);
+    // Fallback to basic sentiment analysis
+    const fallbackAnalysis = analyzeArticleSentiment(articles[0] || { title: "", publishedAt: new Date() });
+    return {
+      score: fallbackAnalysis.score,
+      positive: fallbackAnalysis.positive,
+      negative: fallbackAnalysis.negative,
+      reasoning: "Analysis performed using fallback method due to AI service unavailability",
+    };
+  }
+}
+
 // ============================================================================
 // MAIN ANALYSIS FUNCTION
 // ============================================================================
@@ -356,7 +443,10 @@ export async function analyzeNewsArticles(
   // Step 1: Deduplicate articles
   const uniqueArticles = deduplicateArticles(articles);
 
-  // Step 2: Calculate weights for each article and build breakdown
+  // Step 2: Use Claude AI to analyze all articles together
+  const claudeAnalysis = await analyzeWithClaude(uniqueArticles);
+
+  // Step 3: Calculate weights for each article and build breakdown
   const weightedArticles: WeightedArticle[] = [];
   const articleBreakdown: ArticleSentimentBreakdown[] = [];
 
@@ -369,7 +459,7 @@ export async function analyzeNewsArticles(
     // Total weight is the product of all factors
     const totalWeight = recencyWeight * specificityWeight * impactResult.weight;
 
-    // Analyze individual article sentiment
+    // Analyze individual article sentiment (for breakdown purposes)
     const sentimentAnalysis = analyzeArticleSentiment(article);
 
     weightedArticles.push({
@@ -400,25 +490,9 @@ export async function analyzeNewsArticles(
     });
   }
 
-  // Step 3: Calculate weighted sentiment scores
-  let totalWeightedScore = 0;
-  let totalWeight = 0;
-  const allPositive: string[] = [];
-  const allNegative: string[] = [];
-
-  for (let i = 0; i < weightedArticles.length; i++) {
-    const weighted = weightedArticles[i];
-    const breakdown = articleBreakdown[i];
-
-    totalWeightedScore += breakdown.score * weighted.totalWeight;
-    totalWeight += weighted.totalWeight;
-
-    allPositive.push(...breakdown.positiveTerms);
-    allNegative.push(...breakdown.negativeTerms);
-  }
-
-  // Step 4: Calculate final weighted average score
-  const finalScore = totalWeight > 0 ? totalWeightedScore / totalWeight : 0;
+  // Step 4: Use Claude's overall sentiment score as the primary signal
+  // Claude analyzes all articles together with better context understanding
+  const finalScore = claudeAnalysis.score;
 
   // Step 5: Calculate confidence based on data quality, article count, and sentiment consistency
   let baseConfidence = 0;
@@ -441,11 +515,20 @@ export async function analyzeNewsArticles(
     confidence = Math.min(1.0, confidence + 0.1);
   }
 
-  // Step 6: Get unique indicators
-  const positiveIndicators = [...new Set(allPositive)].slice(0, 10);
-  const negativeIndicators = [...new Set(allNegative)].slice(0, 10);
+  // Step 6: Use Claude's indicators (enhanced by combining with local analysis)
+  const allPositive: string[] = [];
+  const allNegative: string[] = [];
 
-  // Step 7: Generate analysis text
+  for (const breakdown of articleBreakdown) {
+    allPositive.push(...breakdown.positiveTerms);
+    allNegative.push(...breakdown.negativeTerms);
+  }
+
+  // Combine Claude's indicators with locally detected terms
+  const positiveIndicators = [...new Set([...claudeAnalysis.positive, ...allPositive])].slice(0, 10);
+  const negativeIndicators = [...new Set([...claudeAnalysis.negative, ...allNegative])].slice(0, 10);
+
+  // Step 7: Generate analysis text using Claude's reasoning
   const label = scoreToLabel(finalScore, dataQuality);
   let analysis = "";
 
@@ -454,27 +537,16 @@ export async function analyzeNewsArticles(
     ? " (Note: Limited article quality - sentiment may be less reliable) "
     : "";
 
-  if (finalScore > 0.3) {
-    analysis = `Overall positive sentiment detected across ${uniqueArticles.length} articles.${qualityNote}`;
-    analysis += ` Strong positive indicators include: ${positiveIndicators.slice(0, 3).join(", ")}. `;
-    if (negativeIndicators.length > 0) {
-      analysis += `Some concerns noted: ${negativeIndicators.slice(0, 2).join(", ")}.`;
-    } else {
-      analysis += `Minimal negative coverage found.`;
-    }
-  } else if (finalScore < -0.3) {
-    analysis = `Overall negative sentiment detected across ${uniqueArticles.length} articles.${qualityNote}`;
-    analysis += ` Key concerns include: ${negativeIndicators.slice(0, 3).join(", ")}. `;
-    if (positiveIndicators.length > 0) {
-      analysis += `Some positive developments: ${positiveIndicators.slice(0, 2).join(", ")}.`;
-    } else {
-      analysis += `Limited positive coverage found.`;
-    }
-  } else {
-    analysis = `Balanced or neutral sentiment across ${uniqueArticles.length} articles.${qualityNote}`;
-    const posCount = positiveIndicators.length;
-    const negCount = negativeIndicators.length;
-    analysis += ` Found ${posCount} positive and ${negCount} negative indicators, suggesting mixed market signals.`;
+  // Use Claude's reasoning as the primary analysis
+  analysis = `AI Analysis: ${claudeAnalysis.reasoning}${qualityNote}`;
+
+  // Add indicator summary
+  if (positiveIndicators.length > 0 && negativeIndicators.length > 0) {
+    analysis += ` Key factors: Positive - ${positiveIndicators.slice(0, 3).join(", ")}. Negative - ${negativeIndicators.slice(0, 3).join(", ")}.`;
+  } else if (positiveIndicators.length > 0) {
+    analysis += ` Key positive factors: ${positiveIndicators.slice(0, 5).join(", ")}.`;
+  } else if (negativeIndicators.length > 0) {
+    analysis += ` Key negative factors: ${negativeIndicators.slice(0, 5).join(", ")}.`;
   }
 
   return {

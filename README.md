@@ -27,10 +27,21 @@ StockSensei uses a multi-factor approach to generate stock predictions by combin
 - Identifies trend strength, momentum, and overbought/oversold conditions
 
 **2. AI Sentiment Score (50% weight)**
-- Claude AI analyzes recent news articles about the stock
+- Claude AI (Sonnet 3.5) analyzes recent news articles about the stock with deep contextual understanding
 - Produces a sentiment score ranging from -1 (very negative) to +1 (very positive)
 - Normalized to 0-1 range for the final calculation
-- Considers market sentiment, news tone, and headline analysis
+- **Context-Aware Analysis**: Understands nuance, sarcasm, and complex financial language
+  - Example: "Growth slower than expected" → Correctly negative despite "growth"
+  - Example: "Drop less severe than feared" → Correctly positive despite "drop"
+- **Relationship Understanding**: Analyzes all articles together, not independently
+  - Identifies contradictory reports and weighs source credibility
+  - Understands how multiple news items relate and impact each other
+- **Financial Expertise**: Specialized understanding of financial news
+  - Earnings beats/misses, analyst upgrades/downgrades
+  - Product launches, regulatory approvals, leadership changes
+  - Price targets, guidance changes, market positioning
+- **Temporal Decay**: Recent news weighted more heavily than older articles
+- Provides detailed reasoning for sentiment score with specific indicators
 
 **3. Volume Analysis (Dynamic adjustment)**
 - Adds or subtracts up to ±0.15 from the final score based on volume patterns
