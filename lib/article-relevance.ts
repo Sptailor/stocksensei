@@ -41,6 +41,17 @@ const TRUSTED_FINANCIAL_DOMAINS = [
   "investing.com",
   "financialtimes.com",
   "businessinsider.com",
+  // Cryptocurrency news sources
+  "coindesk.com",
+  "cointelegraph.com",
+  "decrypt.co",
+  "theblock.co",
+  "cryptonews.com",
+  "cryptoslate.com",
+  "bitcoinmagazine.com",
+  "ambcrypto.com",
+  "u.today",
+  "newsbtc.com",
 ];
 
 /**

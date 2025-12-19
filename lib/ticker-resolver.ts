@@ -73,6 +73,24 @@ function generateAliases(symbol: string, shortName: string, longName: string): s
   // Add the symbol itself
   aliases.add(symbol.toUpperCase());
 
+  // Special handling for crypto symbols (e.g., BTC-USD, ETH-USD)
+  const isCrypto = symbol.includes("-USD") || symbol.includes("-BTC") || symbol.includes("-EUR");
+  if (isCrypto) {
+    // Add base crypto symbol without currency pair
+    const baseCrypto = symbol.split("-")[0];
+    aliases.add(baseCrypto);
+
+    // For names like "Ethereum USD", add just "Ethereum"
+    if (shortName) {
+      const cleanedShort = shortName.replace(/\s+(USD|BTC|EUR|GBP)$/i, "").trim();
+      if (cleanedShort) aliases.add(cleanedShort);
+    }
+    if (longName) {
+      const cleanedLong = longName.replace(/\s+(USD|BTC|EUR|GBP)$/i, "").trim();
+      if (cleanedLong) aliases.add(cleanedLong);
+    }
+  }
+
   // Add short name
   if (shortName) {
     aliases.add(shortName);
@@ -156,6 +174,24 @@ function getSpecialAliases(symbol: string): string[] {
     T: ["AT&T", "AT&T Inc"],
     VZ: ["Verizon", "Verizon Communications"],
     CMCSA: ["Comcast", "Comcast Corporation"],
+    // Cryptocurrencies
+    "BTC-USD": ["Bitcoin", "BTC", "bitcoin"],
+    "ETH-USD": ["Ethereum", "ETH", "Ether", "ethereum"],
+    "BNB-USD": ["Binance Coin", "BNB", "Binance"],
+    "XRP-USD": ["Ripple", "XRP", "ripple"],
+    "ADA-USD": ["Cardano", "ADA", "cardano"],
+    "DOGE-USD": ["Dogecoin", "DOGE", "Doge", "dogecoin"],
+    "SOL-USD": ["Solana", "SOL", "solana"],
+    "MATIC-USD": ["Polygon", "MATIC", "polygon"],
+    "DOT-USD": ["Polkadot", "DOT", "polkadot"],
+    "AVAX-USD": ["Avalanche", "AVAX", "avalanche"],
+    "LINK-USD": ["Chainlink", "LINK", "chainlink"],
+    "UNI-USD": ["Uniswap", "UNI", "uniswap"],
+    "LTC-USD": ["Litecoin", "LTC", "litecoin"],
+    "BCH-USD": ["Bitcoin Cash", "BCH", "bitcoin cash"],
+    "SHIB-USD": ["Shiba Inu", "SHIB", "shiba inu"],
+    "TRX-USD": ["Tron", "TRX", "tron"],
+    "ATOM-USD": ["Cosmos", "ATOM", "cosmos"],
   };
 
   return special[symbol.toUpperCase()] || [];
