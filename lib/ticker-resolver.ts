@@ -3,7 +3,10 @@
  * Resolves stock tickers to company names for relevance filtering
  */
 
-import yahooFinance from "yahoo-finance2";
+import YahooFinance from "yahoofinance";
+
+// Initialize Yahoo Finance v3
+const yahooFinance = new YahooFinance();
 
 // Cache for ticker -> company name mappings
 const tickerCache = new Map<string, TickerInfo>();

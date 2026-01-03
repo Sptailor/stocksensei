@@ -33,7 +33,8 @@ interface NewsSource {
  */
 async function fetchYahooFinanceNews(symbol: string): Promise<NewsArticle[]> {
   try {
-    const yahooFinance = (await import("yahoo-finance2")).default;
+    const YahooFinance = (await import("yahoofinance")).default;
+    const yahooFinance = new YahooFinance();
 
     // Try quoteSummary first
     try {

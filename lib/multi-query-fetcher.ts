@@ -9,7 +9,10 @@ import { filterRelevantArticles } from "./article-relevance";
 import type { NewsArticle } from "./news-fetcher";
 
 // Import individual news source fetchers
-import yahooFinance from "yahoo-finance2";
+import YahooFinance from "yahoofinance";
+
+// Initialize Yahoo Finance v3
+const yahooFinance = new YahooFinance();
 
 const MINIMUM_ARTICLES = 3;
 const TARGET_ARTICLES = 5;
