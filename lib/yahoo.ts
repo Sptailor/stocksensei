@@ -1,5 +1,8 @@
-import yahooFinance from "yahoo-finance2";
+import YahooFinance from "yahoofinance";
 import { PriceData } from "./indicators";
+
+// Initialize Yahoo Finance v3
+const yahooFinance = new YahooFinance();
 
 export interface StockQuote {
   symbol: string;
