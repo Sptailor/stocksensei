@@ -193,8 +193,8 @@ export async function searchStocks(query: string): Promise<Array<{ symbol: strin
       .filter((q) => 'quoteType' in q && q.quoteType === "EQUITY")
       .slice(0, 10)
       .map((q) => ({
-        symbol: q.symbol,
-        name: ('longname' in q && q.longname) || ('shortname' in q && q.shortname) || q.symbol,
+        symbol: q.symbol as string,
+        name: (('longname' in q && q.longname) || ('shortname' in q && q.shortname) || q.symbol) as string,
       }));
   } catch (error) {
     console.error(`Error searching for ${query}:`, error);
